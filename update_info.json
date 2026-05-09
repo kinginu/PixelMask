@@ -1,1 +1,6 @@
-{}
+{
+  "latest_version_code": 1,
+  "latest_version_name": "1.0.6",
+  "download_url": "https://github.com/kinginu/PixelMask/releases/download/1-1.0.6/PixelMask-1.0.6.apk",
+  "changelog": "First PixelMask release.\n\n- Forked from BaltiApps/Pixelify-Google-Photos and rebuilt on a modern stack: Kotlin 2.2, Jetpack Compose, Material 3 dynamic colors\n- Spoof internals migrated to YukiHookAPI 1.3.1 + KavaRef 1.0.2\n- New launcher icon (Bugdroid silhouette + 4-blade pinwheel, monochrome themed-icon support)\n- New package coordinate: com.kinginu.pixelmask\n- compileSdk / targetSdk 36, minSdk 26"
+}
