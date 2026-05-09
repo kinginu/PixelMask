@@ -4,6 +4,8 @@ An LSPosed / Vector module that makes **Google Photos believe it is running on a
 
 > Forked from [BaltiApps/Pixelify-Google-Photos](https://github.com/BaltiApps/Pixelify-Google-Photos) (EOL since 2024) and rebuilt on a modern stack: **Kotlin 2.2 · Jetpack Compose · Material 3 dynamic colors · YukiHookAPI 1.3 / KavaRef**. Package: `com.kinginu.pixelmask`.
 
+<a href="https://www.buymeacoffee.com/kinginu" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60"></a>
+
 ---
 
 ## How it works
