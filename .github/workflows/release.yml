@@ -70,7 +70,17 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore: update_info.json for v${{ inputs.version_name }} (code ${{ env.NEW_VERSION_CODE }})"
-            git push
+            # Race-safe push: if main has advanced since checkout (e.g. someone
+            # pushed while this workflow was running), rebase our chore commit
+            # on top before pushing again. Without this, two concurrent runs
+            # silently lose one of their version-code bumps.
+            for i in 1 2 3; do
+              if git push origin HEAD:main; then
+                break
+              fi
+              echo "push rejected, pulling and retrying ($i/3)..."
+              git pull --rebase origin main
+            done
           fi
 
       - name: Decode release keystore from secret
