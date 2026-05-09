@@ -1,0 +1,68 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+    id 'com.google.devtools.ksp' version '2.2.10-2.0.2'
+}
+
+android {
+    namespace 'com.kinginu.pixelmask'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.kinginu.pixelmask"
+        minSdk 26
+        targetSdk 36
+        // CI passes -PversionCode / -PversionName from the release workflow.
+        // Local debug builds fall back to 1 / "0.0.0-dev".
+        versionCode (project.findProperty('versionCode')?.toInteger() ?: 1)
+        versionName (project.findProperty('versionName') ?: '0.0.0-dev')
+
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    buildFeatures {
+        viewBinding false
+        compose true
+        buildConfig = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.activity:activity-compose:1.8.2'
+
+    implementation platform('androidx.compose:compose-bom:2024.02.00')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.navigation:navigation-compose:2.7.7'
+    implementation 'com.google.android.material:material:1.11.0'
+
+    // YukiHookAPI 1.3.x — Kotlin DSL on top of the classic Xposed entry.
+    // 1.3 split out reflection into KavaRef, which we now declare explicitly.
+    implementation 'com.highcapable.yukihookapi:api:1.3.1'
+    ksp 'com.highcapable.yukihookapi:ksp-xposed:1.3.1'
+    implementation 'com.highcapable.kavaref:kavaref-core:1.0.2'
+    implementation 'com.highcapable.kavaref:kavaref-extension:1.0.2'
+
+    compileOnly 'de.robv.android.xposed:api:82'
+}

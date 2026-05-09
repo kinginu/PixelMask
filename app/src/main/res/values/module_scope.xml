@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="module_scope">
+        <item>com.google.android.apps.photos</item>
+        <item>com.kinginu.pixelmask</item>
+    </string-array>
+</resources>

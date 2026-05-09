@@ -1,0 +1,43 @@
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingTranslation">
+
+    <string name="app_name">PixelMask</string>
+
+    <!-- Navigation -->
+    <string name="home">Home</string>
+    <string name="settings">Settings</string>
+
+    <!-- Home -->
+    <string name="module_active">Module Active</string>
+    <string name="module_not_active">Module Not Active</string>
+    <string name="module_not_active_text">Enable %1$s in LSPosed / EdXposed and reboot.</string>
+    <string name="module_disabled">Module Disabled</string>
+    <string name="module_disabled_text">Turn on the master switch in Settings.</string>
+    <string name="new_version_available">New version available</string>
+    <string name="module_up_to_date">Module up to date</string>
+    <string name="tap_to_check_update">Tap to check for updates</string>
+    <string name="tap_to_download">Tap to download</string>
+    <string name="android_version">Android Version</string>
+    <string name="device_model">Device Model</string>
+    <string name="app_version">App Version</string>
+    <string name="info_and_links">Info &amp; Links</string>
+    <string name="about_app">About %1$s</string>
+    <string name="report_issues">Report Issues</string>
+
+    <!-- Settings -->
+    <string name="enable_service">Enable %1$s</string>
+    <string name="module_is_active">Module is active</string>
+    <string name="module_is_not_active">Module is disabled</string>
+    <string name="target_device">Target Device</string>
+    <string name="spoof_only_google_photos">Spoof only Google Photos</string>
+    <string name="enable_verbose_logs">Enable verbose logs</string>
+    <string name="actions">Actions</string>
+    <string name="force_stop_google_photos">Force stop Google Photos</string>
+    <string name="open_google_photos">Open Google Photos</string>
+    <string name="please_force_stop_google_photos">Please force stop Google Photos to take effect.</string>
+
+    <!-- Utils -->
+    <string name="killing_please_wait">Killing… please wait.</string>
+    <string name="failed_to_stop_package">Failed to stop package. Please stop manually.</string>
+    <string name="failed_to_launch_package">Failed to launch. Please start manually.</string>
+</resources>

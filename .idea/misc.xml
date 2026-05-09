@@ -1,0 +1,27 @@
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/drawable/ic_export.xml" value="0.21481481481481482" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/drawable/ic_import.xml" value="0.2203125" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/drawable/ic_launcher_background.xml" value="0.1125" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/drawable/ic_share.xml" value="0.21481481481481482" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/layout/activity_main.xml" value="0.25" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/layout/advanced_options_activity.xml" value="0.1537037037037037" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/layout/feature_customize.xml" value="0.20416666666666666" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/menu/menu_activity_main.xml" value="0.20416666666666666" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.20833333333333334" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.20833333333333334" />
+        <entry key="..\:/AndroidStudioProjects/Pixelify-Google-Photos/app/src/main/res/xml/provider_paths.xml" value="0.20416666666666666" />
+        <entry key="..\:/Users/SayantanRC/AndroidStudioProjects/PixelifyGooglePhotos/app/src/main/res/layout/activity_main.xml" value="0.20416666666666666" />
+      </map>
+    </option>
+  </component>
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="jbr-21" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>
