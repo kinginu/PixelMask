@@ -168,7 +168,7 @@ class MainActivity : ComponentActivity() {
                                     .size(32.dp)
                                     .clip(CircleShape)
                             )
-                            Spacer(Modifier.width(0.dp))
+                            Spacer(Modifier.width(8.dp))
                             Text(
                                 text = stringResource(R.string.app_name),
                                 style = MaterialTheme.typography.headlineLarge,

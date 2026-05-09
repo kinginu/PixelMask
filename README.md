@@ -142,8 +142,6 @@ No `develop`, no `release/*`, no `hotfix/*` — flat is good for a one-person mo
    5. Creates a GitHub Release tagged `<code>-<name>` with the APK attached
 4. The in-app updater fetches `update_info.json` from `main` and points users at the new release.
 
-**Release Drafter** runs on every push to `main` and keeps a draft at *Releases → Draft* with the merged-PR titles since the last release. Treat it as a staging area for the changelog you'll paste into Release Module's input.
-
 **Signing** — releases are signed by a single long-lived keystore stored as repo secrets. Devices that already have an older PixelMask install can upgrade in place; signature stays the same forever. The workflow consumes four secrets: `RELEASE_KEYSTORE_B64` (base64 of the keystore file), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. Generate the keystore once locally with `keytool -genkey -keyalg RSA -keysize 2048 -validity 36500`, base64-encode it, paste into Settings → Secrets → Actions, and back the original up offline (lose the file or its passwords and you can never push another update).
 
 ---
