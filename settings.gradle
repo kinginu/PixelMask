@@ -7,5 +7,5 @@ dependencyResolutionManagement {
         maven { url "https://jitpack.io" }
     }
 }
-rootProject.name = "Pixelify Google Photos"
+rootProject.name = "PixelMask"
 include ':app'
