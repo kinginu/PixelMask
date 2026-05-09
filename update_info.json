@@ -1,6 +1,6 @@
 {
-  "latest_version_code": 2,
-  "latest_version_name": "1.0.7",
-  "download_url": "https://github.com/kinginu/PixelMask/releases/download/2-1.0.7/PixelMask-1.0.7.apk",
-  "changelog": "Fix the launcher icon shown in LSPosed Manager: removed leftover legacy density-specific mipmap PNGs that overrode the adaptive icon and kept showing the old Pixelify mountain icon for the new com.kinginu.pixelmask install."
+  "latest_version_code": 3,
+  "latest_version_name": "1.0.9",
+  "download_url": "https://github.com/kinginu/PixelMask/releases/download/3-1.0.9/PixelMask-1.0.9.apk",
+  "changelog": "UI polish: the top bar now shows the launcher icon (clipped to a circle) on the left with the **PixelMask** wordmark in bold, tinted by the device's Material You primary colour. No functional changes."
 }
