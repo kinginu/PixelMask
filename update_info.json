@@ -1,6 +1,6 @@
 {
-  "latest_version_code": 10,
-  "latest_version_name": "1.0.14",
-  "download_url": "https://github.com/kinginu/PixelMask/releases/download/10-1.0.14/PixelMask-1.0.14.apk",
-  "changelog": "UI: settle on the final top-bar spacing (8dp gap between the launcher icon and the wordmark). Also drops the unused Release Drafter workflow that was emitting orphan v8.0.1-style drafts on the releases page."
+  "latest_version_code": 11,
+  "latest_version_name": "1.0.15",
+  "download_url": "https://github.com/kinginu/PixelMask/releases/download/11-1.0.15/PixelMask-1.0.15.apk",
+  "changelog": "Internal: dependency refresh — bumped Compose BOM 2024.02 -> 2026.05 (M3 1.4.0 + UI 1.11.1), core-ktx 1.12 -> 1.18, activity-compose 1.8 -> 1.13, navigation-compose 2.7.7 -> 2.9.8. Also dropped the unused lifecycle-runtime-ktx and silenced the AGP packagingOptions deprecation. No user-facing change."
 }
