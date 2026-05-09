@@ -13,6 +13,7 @@ object Constants {
     const val LATEST_RELEASE_URL = "$REPO_URL_PUBLIC/releases/latest"
 
     const val FIELD_LATEST_VERSION_CODE = "latest_version_code"
+    const val FIELD_DOWNLOAD_URL = "download_url"
 
     const val PREF_MODULE_ENABLED = "PREF_MODULE_ENABLED"
     const val PREF_DEVICE_TO_SPOOF = "PREF_DEVICE_TO_SPOOF"

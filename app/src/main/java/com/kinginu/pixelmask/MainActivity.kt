@@ -11,9 +11,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -40,6 +43,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
@@ -54,6 +58,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.kinginu.pixelmask.Constants.FIELD_DOWNLOAD_URL
 import com.kinginu.pixelmask.Constants.FIELD_LATEST_VERSION_CODE
 import com.kinginu.pixelmask.Constants.LATEST_RELEASE_URL
 import com.kinginu.pixelmask.Constants.UPDATE_INFO_URL
@@ -152,23 +157,25 @@ class MainActivity : ComponentActivity() {
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    },
-                    navigationIcon = {
-                        Image(
-                            bitmap = launcherIcon,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .padding(start = 16.dp)
-                                .size(32.dp)
-                                .clip(CircleShape)
-                        )
+                        // Putting the icon in the title slot (instead of navigationIcon)
+                        // bypasses M3's fixed inset between navigationIcon and title, so
+                        // the gap below is exactly Spacer's width.
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Image(
+                                bitmap = launcherIcon,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                            )
+                            Spacer(Modifier.width(0.dp))
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 )
             },
@@ -217,8 +224,15 @@ class MainActivity : ComponentActivity() {
     private fun checkUpdateAvailable(currentVersionCode: Long): String? = try {
         val jsonString = URL(UPDATE_INFO_URL).readText()
         if (jsonString.isNotBlank()) {
-            val remoteVersion = JSONObject(jsonString).getInt(FIELD_LATEST_VERSION_CODE)
-            if (currentVersionCode < remoteVersion) LATEST_RELEASE_URL else null
+            val json = JSONObject(jsonString)
+            val remoteVersion = json.getInt(FIELD_LATEST_VERSION_CODE)
+            if (currentVersionCode < remoteVersion) {
+                // Workflow already wrote the exact APK URL into download_url; if it's
+                // missing for any reason, fall back to /releases/latest so the user still
+                // ends up somewhere useful.
+                json.optString(FIELD_DOWNLOAD_URL).takeIf { it.isNotBlank() }
+                    ?: LATEST_RELEASE_URL
+            } else null
         } else null
     } catch (e: Exception) {
         android.util.Log.w("PixelMask", "update check failed", e)
