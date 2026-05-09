@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 README
+    url: https://github.com/kinginu/PixelMask#readme
+    about: Setup instructions, supported frameworks, build steps.

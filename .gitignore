@@ -1,0 +1,25 @@
+# Android / Gradle build output
+/build
+/app/build
+.gradle/
+
+# Local SDK paths and secrets
+local.properties
+
+# Per-developer IDE / tooling state
+.idea/
+.kotlin/
+.claude/
+*.iml
+
+# OS noise
+.DS_Store
+
+# Captures and logs
+/captures
+*.log
+*.hprof
+
+# YukiHookAPI KSP outputs (regenerated each build into the source tree)
+/app/src/main/assets/xposed_init
+/app/src/main/resources/META-INF/yukihookapi_init

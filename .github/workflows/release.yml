@@ -1,0 +1,132 @@
+name: Release Module
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version Name (e.g., 1.1.0)'
+        required: true
+      changelog:
+        description: 'Changelog (optional, copy from the Release Drafter draft)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Calculate next version code
+        id: calc_version
+        run: |
+          if [ -f update_info.json ]; then
+            CURRENT_CODE=$(jq -r '.latest_version_code // 0' update_info.json)
+          else
+            CURRENT_CODE=0
+          fi
+          NEW_CODE=$((CURRENT_CODE + 1))
+          echo "Current version code: $CURRENT_CODE"
+          echo "Next version code:    $NEW_CODE"
+          echo "NEW_VERSION_CODE=$NEW_CODE" >> $GITHUB_ENV
+
+      - name: Update update_info.json
+        env:
+          # Pass user inputs through env vars instead of ${{ ... }} shell
+          # interpolation. Otherwise quotes/backticks in the changelog break
+          # the surrounding shell command (jq saw a malformed --arg note and
+          # silently failed, leaving update_info.json un-bumped for v1.0.16).
+          VERSION_NAME: ${{ inputs.version_name }}
+          CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          TAG_NAME="${{ env.NEW_VERSION_CODE }}-${VERSION_NAME}"
+          APK_NAME="PixelMask-${VERSION_NAME}.apk"
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/${APK_NAME}"
+
+          if [ ! -f update_info.json ]; then
+            echo '{}' > update_info.json
+          fi
+
+          tmp=$(mktemp)
+          jq --arg vc "${{ env.NEW_VERSION_CODE }}" \
+             --arg vn "$VERSION_NAME" \
+             --arg url "$DOWNLOAD_URL" \
+             --arg note "$CHANGELOG" \
+             '.latest_version_code = ($vc|tonumber)
+              | .latest_version_name = $vn
+              | .download_url        = $url
+              | .changelog           = $note' \
+             update_info.json > "$tmp" && mv "$tmp" update_info.json
+
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add update_info.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update_info.json for v${VERSION_NAME} (code ${{ env.NEW_VERSION_CODE }})"
+            # Race-safe push: if main has advanced since checkout (e.g. someone
+            # pushed while this workflow was running), rebase our chore commit
+            # on top before pushing again. Without this, two concurrent runs
+            # silently lose one of their version-code bumps.
+            for i in 1 2 3; do
+              if git push origin HEAD:main; then
+                break
+              fi
+              echo "push rejected, pulling and retrying ($i/3)..."
+              git pull --rebase origin main
+            done
+          fi
+
+      - name: Decode release keystore from secret
+        env:
+          KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::RELEASE_KEYSTORE_B64 secret is not set. See README → Branching & releases for setup." >&2
+            exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build release APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleRelease \
+            -PversionCode=${{ env.NEW_VERSION_CODE }} \
+            -PversionName=${{ inputs.version_name }} \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
+            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+
+      - name: Rename APK
+        run: |
+          SRC_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          DEST_APK="app/build/outputs/apk/release/PixelMask-${{ inputs.version_name }}.apk"
+          if [ "$SRC_APK" != "$DEST_APK" ]; then
+            mv "$SRC_APK" "$DEST_APK"
+          fi
+          ls -la app/build/outputs/apk/release/
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.NEW_VERSION_CODE }}-${{ inputs.version_name }}
+          name: v${{ inputs.version_name }}
+          body: ${{ inputs.changelog }}
+          files: |
+            app/build/outputs/apk/release/PixelMask-${{ inputs.version_name }}.apk
+          draft: false
+          prerelease: false
