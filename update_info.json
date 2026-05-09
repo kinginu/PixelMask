@@ -1,6 +1,6 @@
 {
-  "latest_version_code": 9,
-  "latest_version_name": "1.0.13",
-  "download_url": "https://github.com/kinginu/PixelMask/releases/download/9-1.0.13/PixelMask-1.0.13.apk",
-  "changelog": "UI: top bar wordmark bumped to headlineLarge (32sp) bold + Material You primary tint, with the launcher icon flush against it (no M3 navigationIcon-slot inset). Update card now opens the APK download URL directly from update_info.json — one tap straight to the file instead of routing through the GitHub release page."
+  "latest_version_code": 10,
+  "latest_version_name": "1.0.14",
+  "download_url": "https://github.com/kinginu/PixelMask/releases/download/10-1.0.14/PixelMask-1.0.14.apk",
+  "changelog": "UI: settle on the final top-bar spacing (8dp gap between the launcher icon and the wordmark). Also drops the unused Release Drafter workflow that was emitting orphan v8.0.1-style drafts on the releases page."
 }
