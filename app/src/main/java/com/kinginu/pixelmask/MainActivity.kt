@@ -42,12 +42,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -135,6 +136,18 @@ class MainActivity : ComponentActivity() {
             coroutineScope.launch { snackbarHostState.showSnackbar(rebootMessage) }
         }
 
+        val context = LocalContext.current
+        // painterResource(R.mipmap.ic_launcher) crashes with "Only VectorDrawables and
+        // rasterized asset types are supported" because the launcher icon is an
+        // <adaptive-icon> XML which Compose's resource loader doesn't accept. Go through
+        // PackageManager so Android's regular icon-rendering path produces a Bitmap we
+        // can hand to Image — works for adaptive, themed, and legacy icons alike.
+        val launcherIcon = remember(context) {
+            context.packageManager.getApplicationIcon(context.packageName)
+                .toBitmap()
+                .asImageBitmap()
+        }
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -148,7 +161,7 @@ class MainActivity : ComponentActivity() {
                     },
                     navigationIcon = {
                         Image(
-                            painter = painterResource(R.mipmap.ic_launcher),
+                            bitmap = launcherIcon,
                             contentDescription = null,
                             modifier = Modifier
                                 .padding(start = 16.dp)
