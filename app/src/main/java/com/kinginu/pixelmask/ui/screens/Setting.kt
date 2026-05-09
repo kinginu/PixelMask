@@ -97,7 +97,7 @@ fun SettingScreen(onSettingChanged: () -> Unit) {
     if (showDeviceSheet) {
         DeviceSelectionSheet(
             sheetState = sheetState,
-            deviceList = DeviceProps.allDevices.map { it.deviceName },
+            deviceList = DeviceProps.allDevices,
             currentDevice = deviceToSpoof,
             onDeviceSelected = { device ->
                 deviceToSpoof = device

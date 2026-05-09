@@ -2,6 +2,7 @@ package com.kinginu.pixelmask.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,12 +24,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kinginu.pixelmask.R
+import com.kinginu.pixelmask.spoof.DeviceProps
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeviceSelectionSheet(
     sheetState: SheetState,
-    deviceList: List<String>,
+    deviceList: List<DeviceProps.DeviceEntry>,
     currentDevice: String,
     onDeviceSelected: (String) -> Unit,
     onDismiss: () -> Unit
@@ -48,21 +50,28 @@ fun DeviceSelectionSheet(
             contentPadding = PaddingValues(bottom = 48.dp)
         ) {
             items(deviceList) { device ->
-                val isSelected = device == currentDevice
+                val isSelected = device.deviceName == currentDevice
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onDeviceSelected(device) }
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                        .clickable { onDeviceSelected(device.deviceName) }
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = device,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = device.deviceName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = device.summary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     if (isSelected) {
                         Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }

@@ -4,6 +4,7 @@ object DeviceProps {
 
     data class DeviceEntry(
         val deviceName: String,
+        val summary: String,
         val props: Map<String, String>,
         val featureLevel: String,
     )
@@ -30,34 +31,53 @@ object DeviceProps {
             "com.google.android.apps.photos.PIXEL_2018_PRELOAD",
         )),
         FeatureLevel("Pixel 2019", listOf(
+            "com.google.android.feature.PIXEL_2019_MIDYEAR_EXPERIENCE",
             "com.google.android.feature.PIXEL_2019_EXPERIENCE",
             "com.google.android.apps.photos.PIXEL_2019_PRELOAD",
         )),
         FeatureLevel("Pixel 2020", listOf(
+            "com.google.android.feature.PIXEL_2020_MIDYEAR_EXPERIENCE",
             "com.google.android.feature.PIXEL_2020_EXPERIENCE",
-            "com.google.android.apps.photos.PIXEL_2020_PRELOAD",
         )),
         FeatureLevel("Pixel 2021", listOf(
+            "com.google.android.feature.PIXEL_2021_MIDYEAR_EXPERIENCE",
             "com.google.android.feature.PIXEL_2021_EXPERIENCE",
-            "com.google.android.apps.photos.PIXEL_2021_PRELOAD",
+        )),
+        FeatureLevel("Pixel 2022", listOf(
+            "com.google.android.feature.PIXEL_2022_MIDYEAR_EXPERIENCE",
+            "com.google.android.feature.PIXEL_2022_EXPERIENCE",
+        )),
+        FeatureLevel("Pixel 2023", listOf(
+            "com.google.android.feature.PIXEL_2023_MIDYEAR_EXPERIENCE",
+            "com.google.android.feature.PIXEL_2023_EXPERIENCE",
+        )),
+        FeatureLevel("Pixel 2024", listOf(
+            "com.google.android.feature.PIXEL_2024_MIDYEAR_EXPERIENCE",
+            "com.google.android.feature.PIXEL_2024_EXPERIENCE",
+        )),
+        FeatureLevel("Pixel 2025", listOf(
+            "com.google.android.feature.PIXEL_2025_MIDYEAR_EXPERIENCE",
+            "com.google.android.feature.PIXEL_2025_EXPERIENCE",
         )),
     )
 
     val allDevices = listOf(
         DeviceEntry(
-            deviceName = "Pixel XL",
+            deviceName = "Pixel",
+            summary = "Unlimited Original-quality backup (lifetime)",
             props = mapOf(
                 "BRAND" to "google",
                 "MANUFACTURER" to "Google",
-                "DEVICE" to "marlin",
-                "PRODUCT" to "marlin",
-                "MODEL" to "Pixel XL",
-                "FINGERPRINT" to "google/marlin/marlin:10/QP1A.191005.007.A3/5972272:user/release-keys"
+                "DEVICE" to "sailfish",
+                "PRODUCT" to "sailfish",
+                "MODEL" to "Pixel",
+                "FINGERPRINT" to "google/sailfish/sailfish:10/QP1A.191005.007.A3/5972272:user/release-keys"
             ),
             featureLevel = "Pixel 2016",
         ),
         DeviceEntry(
             deviceName = "Pixel 2",
+            summary = "Unlimited Storage Saver backup",
             props = mapOf(
                 "BRAND" to "google",
                 "MANUFACTURER" to "Google",
@@ -70,6 +90,7 @@ object DeviceProps {
         ),
         DeviceEntry(
             deviceName = "Pixel 3 XL",
+            summary = "Unlimited Storage Saver backup",
             props = mapOf(
                 "BRAND" to "google",
                 "MANUFACTURER" to "Google",
@@ -82,6 +103,7 @@ object DeviceProps {
         ),
         DeviceEntry(
             deviceName = "Pixel 4 XL",
+            summary = "Unlimited Storage Saver backup",
             props = mapOf(
                 "BRAND" to "google",
                 "MANUFACTURER" to "Google",
@@ -94,6 +116,7 @@ object DeviceProps {
         ),
         DeviceEntry(
             deviceName = "Pixel 5",
+            summary = "Unlimited Storage Saver backup",
             props = mapOf(
                 "BRAND" to "google",
                 "MANUFACTURER" to "Google",
@@ -106,6 +129,7 @@ object DeviceProps {
         ),
         DeviceEntry(
             deviceName = "Pixel 6 Pro",
+            summary = "No notable Photos perks remain",
             props = mapOf(
                 "BRAND" to "google",
                 "MANUFACTURER" to "Google",
@@ -116,9 +140,61 @@ object DeviceProps {
             ),
             featureLevel = "Pixel 2021",
         ),
+        DeviceEntry(
+            deviceName = "Pixel 7 Pro",
+            summary = "No notable Photos perks remain",
+            props = mapOf(
+                "BRAND" to "google",
+                "MANUFACTURER" to "Google",
+                "DEVICE" to "cheetah",
+                "PRODUCT" to "cheetah",
+                "MODEL" to "Pixel 7 Pro",
+                "FINGERPRINT" to "google/cheetah/cheetah:13/TQ2A.230305.008.C1/9619669:user/release-keys"
+            ),
+            featureLevel = "Pixel 2022",
+        ),
+        DeviceEntry(
+            deviceName = "Pixel 8 Pro",
+            summary = "Video Boost, Night Sight Video",
+            props = mapOf(
+                "BRAND" to "google",
+                "MANUFACTURER" to "Google",
+                "DEVICE" to "husky",
+                "PRODUCT" to "husky",
+                "MODEL" to "Pixel 8 Pro",
+                "FINGERPRINT" to "google/husky/husky:14/UD1A.230803.041/10808477:user/release-keys"
+            ),
+            featureLevel = "Pixel 2023",
+        ),
+        DeviceEntry(
+            deviceName = "Pixel 9 Pro XL",
+            summary = "Add Me, Reimagine, unlimited Magic Editor",
+            props = mapOf(
+                "BRAND" to "google",
+                "MANUFACTURER" to "Google",
+                "DEVICE" to "komodo",
+                "PRODUCT" to "komodo",
+                "MODEL" to "Pixel 9 Pro XL",
+                "FINGERPRINT" to "google/komodo/komodo:14/AD1A.240530.047.F1/12150327:user/release-keys"
+            ),
+            featureLevel = "Pixel 2024",
+        ),
+        DeviceEntry(
+            deviceName = "Pixel 10 Pro XL",
+            summary = "Latest Pixel-first AI features",
+            props = mapOf(
+                "BRAND" to "google",
+                "MANUFACTURER" to "Google",
+                "DEVICE" to "mustang",
+                "PRODUCT" to "mustang",
+                "MODEL" to "Pixel 10 Pro XL",
+                "FINGERPRINT" to "google/mustang/mustang:16/BP1A.250805.005/14000000:user/release-keys"
+            ),
+            featureLevel = "Pixel 2025",
+        ),
     )
 
-    const val defaultDeviceName = "Pixel XL"
+    const val defaultDeviceName = "Pixel"
 
     fun getDeviceProps(deviceName: String?): DeviceEntry? =
         allDevices.find { it.deviceName == deviceName }
