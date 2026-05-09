@@ -206,7 +206,8 @@ class MainActivity : ComponentActivity() {
             val remoteVersion = JSONObject(jsonString).getInt(FIELD_LATEST_VERSION_CODE)
             if (currentVersionCode < remoteVersion) RELEASES_URL else null
         } else null
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        android.util.Log.w("PixelMask", "update check failed", e)
         null
     }
 
