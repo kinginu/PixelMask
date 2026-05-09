@@ -1,6 +1,6 @@
 {
-  "latest_version_code": 4,
-  "latest_version_name": "1.0.9",
-  "download_url": "https://github.com/kinginu/PixelMask/releases/download/4-1.0.9/PixelMask-1.0.9.apk",
-  "changelog": "UI polish: top bar now shows the launcher icon (clipped to a circle) on the left with the **PixelMask** wordmark in bold, tinted by the device's Material You primary colour. Also fixes a release-workflow race that would have silently kept future versions from upgrading in place."
+  "latest_version_code": 5,
+  "latest_version_name": "1.0.10",
+  "download_url": "https://github.com/kinginu/PixelMask/releases/download/5-1.0.10/PixelMask-1.0.10.apk",
+  "changelog": "Fix the in-app update checker — AndroidManifest was missing the INTERNET permission since the rebrand, so the update check was failing silently and the card always read 'Module up to date'. Now logs failures to Logcat instead of swallowing them entirely."
 }
