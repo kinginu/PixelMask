@@ -1,6 +1,6 @@
 {
-  "latest_version_code": 5,
-  "latest_version_name": "1.0.10",
-  "download_url": "https://github.com/kinginu/PixelMask/releases/download/5-1.0.10/PixelMask-1.0.10.apk",
-  "changelog": "Fix the in-app update checker — AndroidManifest was missing the INTERNET permission since the rebrand, so the update check was failing silently and the card always read 'Module up to date'. Now logs failures to Logcat instead of swallowing them entirely."
+  "latest_version_code": 6,
+  "latest_version_name": "1.0.11",
+  "download_url": "https://github.com/kinginu/PixelMask/releases/download/6-1.0.11/PixelMask-1.0.11.apk",
+  "changelog": "Fix the launch crash introduced in v1.0.10 — the new top bar tried to load the launcher icon through Compose's painterResource, which doesn't accept <adaptive-icon> XMLs and threw IllegalArgumentException before the first frame. Switched to PackageManager.getApplicationIcon().toBitmap() so Android's normal icon pipeline does the rendering."
 }
