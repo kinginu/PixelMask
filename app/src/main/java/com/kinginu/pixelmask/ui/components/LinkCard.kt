@@ -23,21 +23,18 @@ import androidx.compose.ui.unit.dp
 data class LinkCardItemData(
     val title: String,
     val icon: ImageVector,
-    val url: String
+    val onClick: () -> Unit
 )
 
 @Composable
-fun LinkCard(
-    items: List<LinkCardItemData>,
-    onLinkClick: (String) -> Unit
-) {
+fun LinkCard(items: List<LinkCardItemData>) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column {
             items.forEachIndexed { index, item ->
                 LinkItem(
                     title = item.title,
                     icon = item.icon,
-                    onClick = { onLinkClick(item.url) }
+                    onClick = item.onClick
                 )
                 if (index < items.size - 1) SoftDivider()
             }

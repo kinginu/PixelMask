@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +32,7 @@ import com.kinginu.pixelmask.ui.components.ModuleState
 import com.kinginu.pixelmask.ui.components.StatusCard
 import com.kinginu.pixelmask.ui.components.UpdateCard
 import com.kinginu.pixelmask.utils.ModuleStatus
+import com.kinginu.pixelmask.utils.Utils
 
 @Composable
 fun HomeScreen(
@@ -90,15 +92,19 @@ fun HomeScreen(
                 LinkCardItemData(
                     title = stringResource(R.string.about_app, appName),
                     icon = Icons.Default.Info,
-                    url = Constants.ABOUT_URL
+                    onClick = { onOpenLink(Constants.ABOUT_URL) }
                 ),
                 LinkCardItemData(
-                    title = stringResource(R.string.report_issues),
-                    icon = Icons.Default.BugReport,
-                    url = Constants.REPORT_ISSUES_URL
+                    title = stringResource(R.string.report_working),
+                    icon = Icons.Default.ThumbUp,
+                    onClick = { Utils.openReportIssue(working = true, context = context) }
                 ),
-            ),
-            onLinkClick = onOpenLink
+                LinkCardItemData(
+                    title = stringResource(R.string.report_not_working),
+                    icon = Icons.Default.BugReport,
+                    onClick = { Utils.openReportIssue(working = false, context = context) }
+                ),
+            )
         )
 
         Spacer(modifier = Modifier.height(32.dp))

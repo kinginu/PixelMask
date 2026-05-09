@@ -1,0 +1,87 @@
+name: ✅ Report — Working
+description: PixelMask is working on your setup. Adds your device to the compatibility matrix.
+title: "[Working] "
+labels:
+  - report
+  - working
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tap **Report — Working** in the PixelMask app to land here with most fields pre-filled.
+
+  - type: input
+    id: real-device
+    attributes:
+      label: Your device
+      placeholder: e.g. Samsung Galaxy S24, OnePlus 13T
+    validations:
+      required: true
+
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      placeholder: e.g. Android 14
+    validations:
+      required: true
+
+  - type: input
+    id: spoof-target
+    attributes:
+      label: Spoof target
+      description: Which Pixel did you select in PixelMask?
+      placeholder: e.g. Pixel XL
+    validations:
+      required: true
+
+  - type: input
+    id: module-version
+    attributes:
+      label: PixelMask version
+      placeholder: e.g. 1.0.8
+    validations:
+      required: true
+
+  - type: dropdown
+    id: root-manager
+    attributes:
+      label: Root manager
+      options:
+        - Magisk
+        - KernelSU
+        - KernelSU-Next
+        - APatch
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: lsposed-variant
+    attributes:
+      label: LSPosed framework
+      options:
+        - LSPosed (Zygisk)
+        - LSPosed (Vector / zygisk-vector)
+        - LSPosed (Riru)
+        - EdXposed
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes (optional)
+      placeholder: Anything noteworthy — e.g. coexists with PIF / tricky_store, or only the storage indicator updated.
+    validations:
+      required: false
+
+  - type: textarea
+    id: diag-context
+    attributes:
+      label: Auto-collected context
+      description: Filled in by the app. Edit out anything you don't want to share publicly.
+      render: text
+    validations:
+      required: false

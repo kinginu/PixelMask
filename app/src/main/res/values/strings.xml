@@ -22,7 +22,8 @@
     <string name="app_version">App Version</string>
     <string name="info_and_links">Info &amp; Links</string>
     <string name="about_app">About %1$s</string>
-    <string name="report_issues">Report Issues</string>
+    <string name="report_working">Report — Working</string>
+    <string name="report_not_working">Report — Not working</string>
 
     <!-- Settings -->
     <string name="enable_service">Enable %1$s</string>

@@ -5,13 +5,12 @@ object Constants {
     const val PACKAGE_NAME_GOOGLE_PHOTOS = "com.google.android.apps.photos"
     const val SHARED_PREF_FILE_NAME = "prefs"
 
-    private const val REPO_URL = "https://github.com/kinginu/PixelMask"
+    const val REPO_URL_PUBLIC = "https://github.com/kinginu/PixelMask"
     private const val REPO_RAW_URL = "https://raw.githubusercontent.com/kinginu/PixelMask/main"
 
-    const val ABOUT_URL = REPO_URL
-    const val REPORT_ISSUES_URL = "$REPO_URL/issues"
+    const val ABOUT_URL = REPO_URL_PUBLIC
     const val UPDATE_INFO_URL = "$REPO_RAW_URL/update_info.json"
-    const val RELEASES_URL = "$REPO_URL/releases"
+    const val RELEASES_URL = "$REPO_URL_PUBLIC/releases"
 
     const val FIELD_LATEST_VERSION_CODE = "latest_version_code"
 

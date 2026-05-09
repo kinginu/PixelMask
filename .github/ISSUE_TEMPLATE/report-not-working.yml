@@ -1,0 +1,114 @@
+name: 🐛 Report — Not working
+description: PixelMask isn't taking effect, or Photos still shows storage usage.
+title: "[Not working] "
+labels:
+  - report
+  - not-working
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tap **Report — Not working** in the PixelMask app to land here with most fields pre-filled.
+
+        The most useful single thing you can attach is the LSPosed module log
+        (LSPosed Manager → Modules → PixelMask → Module logs, or
+        `/data/adb/lspd/log/verbose_*.log`).
+
+  - type: input
+    id: real-device
+    attributes:
+      label: Your device
+      placeholder: e.g. Samsung Galaxy S24, OnePlus 13T
+    validations:
+      required: true
+
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      placeholder: e.g. Android 14
+    validations:
+      required: true
+
+  - type: input
+    id: spoof-target
+    attributes:
+      label: Spoof target
+      placeholder: e.g. Pixel XL
+    validations:
+      required: true
+
+  - type: input
+    id: module-version
+    attributes:
+      label: PixelMask version
+      placeholder: e.g. 1.0.8
+    validations:
+      required: true
+
+  - type: dropdown
+    id: root-manager
+    attributes:
+      label: Root manager
+      options:
+        - Magisk
+        - KernelSU
+        - KernelSU-Next
+        - APatch
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: lsposed-variant
+    attributes:
+      label: LSPosed framework
+      options:
+        - LSPosed (Zygisk)
+        - LSPosed (Vector / zygisk-vector)
+        - LSPosed (Riru)
+        - EdXposed
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: symptoms
+    attributes:
+      label: What's not working?
+      placeholder: |
+        e.g. Photos still shows "Storage used" instead of "Free unlimited storage";
+        Photos crashes after enabling the module;
+        toggle in LSPosed Manager won't flip on.
+    validations:
+      required: true
+
+  - type: textarea
+    id: lsposed-log
+    attributes:
+      label: LSPosed module log
+      description: |
+        From LSPosed Manager → Modules → PixelMask → Module logs.
+        Or pull `/data/adb/lspd/log/verbose_*.log`. Even partial logs are useful.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: extras
+    attributes:
+      label: Other Xposed modules / mods involved
+      description: |
+        e.g. PlayIntegrityFix, tricky_store, shamiko, hidemyapplist —
+        these can interact with `Build.*` spoofing or hide PixelMask.
+    validations:
+      required: false
+
+  - type: textarea
+    id: diag-context
+    attributes:
+      label: Auto-collected context
+      description: Filled in by the app. Edit out anything you don't want to share publicly.
+      render: text
+    validations:
+      required: false
