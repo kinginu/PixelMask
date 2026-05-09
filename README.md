@@ -89,6 +89,8 @@ Stack:
 | Kotlin | 2.2.10 |
 | Compose Compiler Gradle Plugin | 2.2.10 |
 | KSP | 2.2.10-2.0.2 |
+| Compose BOM | 2026.05.00 |
+| AndroidX core-ktx / activity-compose / navigation-compose | 1.18.0 / 1.13.0 / 2.9.8 |
 | YukiHookAPI | 1.3.1 |
 | KavaRef (core + extension) | 1.0.2 |
 | Xposed API | 82 (`compileOnly`) |
