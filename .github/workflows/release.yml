@@ -73,14 +73,15 @@ jobs:
             git push
           fi
 
-      - name: Generate release keystore (ephemeral, per-run)
+      - name: Decode release keystore from secret
+        env:
+          KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
         run: |
-          keytool -genkey \
-            -keystore "$RUNNER_TEMP/release.keystore" \
-            -alias pixelmask \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass pixelmask -keypass pixelmask \
-            -dname "CN=PixelMask, O=kinginu, C=JP"
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::RELEASE_KEYSTORE_B64 secret is not set. See README → Branching & releases for setup." >&2
+            exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
 
       - name: Build release APK
         run: |
@@ -89,9 +90,9 @@ jobs:
             -PversionCode=${{ env.NEW_VERSION_CODE }} \
             -PversionName=${{ inputs.version_name }} \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
-            -Pandroid.injected.signing.store.password=pixelmask \
-            -Pandroid.injected.signing.key.alias=pixelmask \
-            -Pandroid.injected.signing.key.password=pixelmask
+            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
 
       - name: Rename APK
         run: |

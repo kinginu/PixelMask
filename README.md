@@ -137,14 +137,14 @@ No `develop`, no `release/*`, no `hotfix/*` — flat is good for a one-person mo
 3. The workflow:
    1. Reads the previous `latest_version_code` from `update_info.json`, increments by 1
    2. Updates `update_info.json` and pushes that commit back to `main`
-   3. Generates a throwaway keystore for this run, builds `assembleRelease` signed with it
+   3. Decodes the release keystore from `RELEASE_KEYSTORE_B64` (a GitHub Actions secret, see *Signing* below) and builds `assembleRelease` signed with it
    4. Renames the APK to `PixelMask-<versionName>.apk`
    5. Creates a GitHub Release tagged `<code>-<name>` with the APK attached
 4. The in-app updater fetches `update_info.json` from `main` and points users at the new release.
 
 **Release Drafter** runs on every push to `main` and keeps a draft at *Releases → Draft* with the merged-PR titles since the last release. Treat it as a staging area for the changelog you'll paste into Release Module's input.
 
-> **TODO — keystore stability.** The release workflow currently generates a fresh keystore each run, so the APK signature changes between releases. That means installing v1.0.6 over v1.0.5 will fail with `INSTALL_FAILED_UPDATE_INCOMPATIBLE` and force a full uninstall/reinstall. Acceptable for a solo dev cycle; before a public release, replace the keystore step with one that decodes a base64 secret (`RELEASE_KEYSTORE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`) from the repo's GitHub Actions secrets, generated once and backed up offline.
+**Signing** — releases are signed by a single long-lived keystore stored as repo secrets. Devices that already have an older PixelMask install can upgrade in place; signature stays the same forever. The workflow consumes four secrets: `RELEASE_KEYSTORE_B64` (base64 of the keystore file), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. Generate the keystore once locally with `keytool -genkey -keyalg RSA -keysize 2048 -validity 36500`, base64-encode it, paste into Settings → Secrets → Actions, and back the original up offline (lose the file or its passwords and you can never push another update).
 
 ---
 
