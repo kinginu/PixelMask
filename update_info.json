@@ -1,6 +1,6 @@
 {
-  "latest_version_code": 3,
+  "latest_version_code": 4,
   "latest_version_name": "1.0.9",
-  "download_url": "https://github.com/kinginu/PixelMask/releases/download/3-1.0.9/PixelMask-1.0.9.apk",
-  "changelog": "UI polish: the top bar now shows the launcher icon (clipped to a circle) on the left with the **PixelMask** wordmark in bold, tinted by the device's Material You primary colour. No functional changes."
+  "download_url": "https://github.com/kinginu/PixelMask/releases/download/4-1.0.9/PixelMask-1.0.9.apk",
+  "changelog": "UI polish: top bar now shows the launcher icon (clipped to a circle) on the left with the **PixelMask** wordmark in bold, tinted by the device's Material You primary colour. Also fixes a release-workflow race that would have silently kept future versions from upgrading in place."
 }
