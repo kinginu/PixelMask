@@ -164,11 +164,11 @@ fun SettingScreen(onSettingChanged: () -> Unit) {
         ActionCard(
             items = listOf(
                 ActionCardItemData(
-                    title = stringResource(R.string.force_stop_google_photos),
+                    title = stringResource(R.string.stop_google_photos_via_settings),
                     icon = Icons.AutoMirrored.Filled.OpenInNew,
                     color = MaterialTheme.colorScheme.error,
                     onClick = {
-                        Utils.forceStopPackage(Constants.PACKAGE_NAME_GOOGLE_PHOTOS, context)
+                        Utils.openAppInfo(Constants.PACKAGE_NAME_GOOGLE_PHOTOS, context)
                         notifyChangedIfActive()
                     }
                 ),

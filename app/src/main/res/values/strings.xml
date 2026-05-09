@@ -32,12 +32,11 @@
     <string name="spoof_only_google_photos">Spoof only Google Photos</string>
     <string name="enable_verbose_logs">Enable verbose logs</string>
     <string name="actions">Actions</string>
-    <string name="force_stop_google_photos">Force stop Google Photos</string>
+    <string name="stop_google_photos_via_settings">Stop Google Photos in Settings</string>
     <string name="open_google_photos">Open Google Photos</string>
     <string name="please_force_stop_google_photos">Please force stop Google Photos to take effect.</string>
 
     <!-- Utils -->
-    <string name="killing_please_wait">Killing… please wait.</string>
-    <string name="failed_to_stop_package">Failed to stop package. Please stop manually.</string>
+    <string name="tap_force_stop_in_app_info">Tap “Force stop” in the app info screen.</string>
     <string name="failed_to_launch_package">Failed to launch. Please start manually.</string>
 </resources>
