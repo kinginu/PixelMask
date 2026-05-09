@@ -10,7 +10,7 @@ object Constants {
 
     const val ABOUT_URL = REPO_URL_PUBLIC
     const val UPDATE_INFO_URL = "$REPO_RAW_URL/update_info.json"
-    const val RELEASES_URL = "$REPO_URL_PUBLIC/releases"
+    const val LATEST_RELEASE_URL = "$REPO_URL_PUBLIC/releases/latest"
 
     const val FIELD_LATEST_VERSION_CODE = "latest_version_code"
 

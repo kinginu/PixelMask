@@ -55,7 +55,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kinginu.pixelmask.Constants.FIELD_LATEST_VERSION_CODE
-import com.kinginu.pixelmask.Constants.RELEASES_URL
+import com.kinginu.pixelmask.Constants.LATEST_RELEASE_URL
 import com.kinginu.pixelmask.Constants.UPDATE_INFO_URL
 import com.kinginu.pixelmask.ui.screens.HomeScreen
 import com.kinginu.pixelmask.ui.screens.SettingScreen
@@ -218,7 +218,7 @@ class MainActivity : ComponentActivity() {
         val jsonString = URL(UPDATE_INFO_URL).readText()
         if (jsonString.isNotBlank()) {
             val remoteVersion = JSONObject(jsonString).getInt(FIELD_LATEST_VERSION_CODE)
-            if (currentVersionCode < remoteVersion) RELEASES_URL else null
+            if (currentVersionCode < remoteVersion) LATEST_RELEASE_URL else null
         } else null
     } catch (e: Exception) {
         android.util.Log.w("PixelMask", "update check failed", e)
