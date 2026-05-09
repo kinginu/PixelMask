@@ -154,10 +154,10 @@ class MainActivity : ComponentActivity() {
                     title = {
                         Text(
                             text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.headlineSmall,
+                            style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(start = 8.dp)
+                            modifier = Modifier.padding(start = 16.dp)
                         )
                     },
                     navigationIcon = {
