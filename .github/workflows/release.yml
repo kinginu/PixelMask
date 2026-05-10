@@ -130,3 +130,31 @@ jobs:
             app/build/outputs/apk/release/PixelMask-${{ inputs.version_name }}.apk
           draft: false
           prerelease: false
+
+      - name: Mirror release to LSPosed module repo
+        # The Xposed-Modules-Repo/com.kinginu.pixelmask repo (created via the
+        # `[submission]` issue on Xposed-Modules-Repo/submission) is what the
+        # LSPosed Manager catalog scrapes. We don't develop there — it just
+        # needs releases mirrored from this repo so users get update
+        # notifications inside the Manager.
+        #
+        # The default GITHUB_TOKEN is scoped to the current repo, so this
+        # step needs a separate PAT with `Contents: Write` on
+        # Xposed-Modules-Repo/com.kinginu.pixelmask. If the secret isn't set
+        # the source-repo release still goes out — we just print a warning
+        # and skip the mirror so a missing / expired token can't block ships.
+        env:
+          GH_TOKEN: ${{ secrets.LSPOSED_MIRROR_TOKEN }}
+          CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::LSPOSED_MIRROR_TOKEN secret is not set — skipping mirror release. The source-repo release went out fine; the LSPosed module catalog won't pick this version up automatically."
+            exit 0
+          fi
+          TAG="${{ env.NEW_VERSION_CODE }}-${{ inputs.version_name }}"
+          APK="app/build/outputs/apk/release/PixelMask-${{ inputs.version_name }}.apk"
+          gh release create "$TAG" \
+            --repo Xposed-Modules-Repo/com.kinginu.pixelmask \
+            --title "v${{ inputs.version_name }}" \
+            --notes "$CHANGELOG" \
+            "$APK"

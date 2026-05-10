@@ -191,6 +191,24 @@ base64-encode it, paste into Settings → Secrets → Actions, and back the
 original up offline (lose the file or its passwords and you can never push
 another update).
 
+**LSPosed module repo mirror** — PixelMask is also published to
+`Xposed-Modules-Repo/com.kinginu.pixelmask`, which is what LSPosed Manager's
+in-app module catalog scrapes. That repo only carries `SUMMARY.md`,
+`README.md` (which links back here), and the release artifacts; no source
+code lives there. The release workflow's `Mirror release to LSPosed module
+repo` step uses a separate PAT (`LSPOSED_MIRROR_TOKEN`, repo secret) with
+`Contents: Write` on the mirror repo to call `gh release create` against
+it with the same APK and changelog that just shipped here. If the secret
+isn't set, the step prints a warning and exits 0 — the source-repo release
+still goes out so a missing / expired PAT can never block a ship; you just
+have to mirror by hand for that one version (or rotate the PAT and re-run
+the workflow).
+
+To rotate the PAT: GitHub → Settings → Developer settings → Personal access
+tokens → Fine-grained tokens → New token, scope to
+`Xposed-Modules-Repo/com.kinginu.pixelmask`, permissions: Contents = Read
+and write. Paste into PixelMask's repo secrets as `LSPOSED_MIRROR_TOKEN`.
+
 ## Tested environments
 
 - KernelSU + zygisk-vector + LSPosed on Android 14+ (current dev target — Pixel profile, unlimited Original-quality storage confirmed working)
