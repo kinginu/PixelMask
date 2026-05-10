@@ -195,19 +195,30 @@ another update).
 `Xposed-Modules-Repo/com.kinginu.pixelmask`, which is what LSPosed Manager's
 in-app module catalog scrapes. That repo only carries `SUMMARY.md`,
 `README.md` (which links back here), and the release artifacts; no source
-code lives there. The release workflow's `Mirror release to LSPosed module
-repo` step uses a separate PAT (`LSPOSED_MIRROR_TOKEN`, repo secret) with
-`Contents: Write` on the mirror repo to call `gh release create` against
-it with the same APK and changelog that just shipped here. If the secret
-isn't set, the step prints a warning and exits 0 — the source-repo release
-still goes out so a missing / expired PAT can never block a ship; you just
-have to mirror by hand for that one version (or rotate the PAT and re-run
-the workflow).
+code lives there.
 
-To rotate the PAT: GitHub → Settings → Developer settings → Personal access
-tokens → Fine-grained tokens → New token, scope to
-`Xposed-Modules-Repo/com.kinginu.pixelmask`, permissions: Contents = Read
-and write. Paste into PixelMask's repo secrets as `LSPOSED_MIRROR_TOKEN`.
+The mirror is kept in sync the *opposite* of how you'd expect: instead of
+this repo pushing to it, **the mirror pulls from here**. A
+`.github/workflows/sync-from-source.yml` workflow on the mirror itself runs
+hourly (and on `workflow_dispatch`) and:
+
+1. `gh release view --repo kinginu/PixelMask` to find the latest release tag.
+2. Skips if the mirror already has that tag.
+3. Otherwise downloads the APK + changelog body and calls `gh release
+   create` against the mirror repo using the mirror's own `GITHUB_TOKEN` —
+   which already has `contents: write` on itself, so no PAT is needed.
+
+The "pull, don't push" inversion is on purpose: pushing from here would
+need a PAT with `Contents: Write` on a repo we don't own. The
+Xposed-Modules-Repo organization has fine-grained PATs disabled for its
+repos and Classic PATs (even with `public_repo`) are also rejected, so
+*no token* you can generate from this account works for that direction.
+Running the sync from inside the mirror sidesteps the whole problem.
+
+Worst-case latency from a source-side release to in-Manager visibility is
+≤ 60 min (cron) + ~10 min (LSPosed catalog bot's own refresh) ≈ 70 min. If
+you need it faster, run the `Sync release from source` workflow manually
+from the mirror's *Actions* tab — that goes through in seconds.
 
 ## Tested environments
 
