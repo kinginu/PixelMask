@@ -1,159 +1,122 @@
 # PixelMask
 
-An LSPosed / Vector module that makes **Google Photos believe it is running on a Google Pixel**, unlocking Pixel-exclusive features (most notably *free unlimited Original-quality storage* on Pixel 1–5 device profiles) on any Android phone.
+Make Google Photos believe your phone is a Google Pixel — and unlock
+Pixel-only perks like **free unlimited Original-quality backup** on any
+rooted Android device.
 
-> Forked from [BaltiApps/Pixelify-Google-Photos](https://github.com/BaltiApps/Pixelify-Google-Photos) (EOL since 2024) and rebuilt on a modern stack: **Kotlin 2.2 · Jetpack Compose · Material 3 dynamic colors · YukiHookAPI 1.3 / KavaRef**. Package: `com.kinginu.pixelmask`.
+![PixelMask app screens](docs/banner-app.png)
+
+> Forked from [BaltiApps/Pixelify-Google-Photos](https://github.com/BaltiApps/Pixelify-Google-Photos)
+> (EOL since 2024) and rebuilt on a modern stack.
 
 <a href="https://www.buymeacoffee.com/kinginu" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60"></a>
 
 ---
 
-## How it works
+## What it does
 
-When Google Photos starts up it asks the system two questions to decide whether to enable Pixel-only features:
+Google Photos checks two things to decide whether you're on a Pixel:
 
-1. *Who made this phone, what model is it?* — reads the static fields on `android.os.Build` (`MANUFACTURER`, `MODEL`, `BRAND`, `FINGERPRINT`, …).
-2. *Does this phone support feature X?* — calls `PackageManager.hasSystemFeature("com.google.android.feature.PIXEL_2016_EXPERIENCE")` and similar flags.
+- the device fingerprint (`Build.MANUFACTURER`, `MODEL`, `BRAND`, `FINGERPRINT`)
+- a list of `hasSystemFeature("PIXEL_<year>_EXPERIENCE")` flags
 
-This module hooks **both** paths inside the Google Photos process only, and answers as if the device were a Pixel of the user's choosing.
+PixelMask intercepts both — but only inside the Photos process, nothing else
+on your phone is affected — and replies with the answers a Pixel of your
+choosing would give. Photos then turns on the perks tied to that Pixel.
 
-```
-   ┌─────────────────────────────────────────────────────────────┐
-   │  PixelMask UI           (Compose · Material 3 · dynamic)    │
-   │  ─────────────────────                                      │
-   │  · pick a target Pixel  · master enable  · verbose logs     │
-   └────────────────────────────────┬────────────────────────────┘
-                                    │ writes
-                                    ▼
-                        SharedPreferences
-                       (xposedsharedprefs=true,
-                        readable from the hook side)
-                                    │ reads
-                                    ▼
-   ┌─────────────────────────────────────────────────────────────┐
-   │  PixelMaskHookEntry     @InjectYukiHookWithXposed           │
-   │  ─────────────────                                          │
-   │  KSP generates the classic Xposed entry point and the       │
-   │  assets/xposed_init pointer file at build time.             │
-   │                                                             │
-   │  loadApp("com.google.android.apps.photos") {                │
-   │    ① override Build.* static fields                         │
-   │       └─ XposedHelpers.setStaticObjectField                 │
-   │          (bypasses the public-static-final modifier)        │
-   │    ② hook ApplicationPackageManager.hasSystemFeature        │
-   │       └─ KavaRef:  resolve().firstMethod { … }.hook { … }   │
-   │          · returns true  for features the chosen Pixel has  │
-   │          · returns false for any Pixel feature it lacks     │
-   │  }                                                          │
-   └────────────────────────────────┬────────────────────────────┘
-                                    │ injected at app load
-                                    ▼
-              ┌────────────────────────────────────┐
-              │  Google Photos process             │
-              │  sees a Pixel device →             │
-              │  unlimited Original-quality backup │
-              └────────────────────────────────────┘
-```
+## Requirements
 
-The **two-list** trick (`featuresToEnable` vs. `featuresToBlock = allKnown - featuresToEnable`) is what lets you target an *older* Pixel from a phone whose Photos app already detects newer features: anything the chosen Pixel doesn't have is actively forced to `false`, not just left alone.
-
----
-
-## Project layout
-
-```
-app/src/main/java/com/kinginu/pixelmask/
-├── PixelMaskHookEntry.kt         ← Yuki entry, the only Xposed-side code
-├── Constants.kt                  ← shared pref keys & package names
-├── spoof/
-│   └── DeviceProps.kt            ← table of Pixels, props, feature levels
-├── ui/
-│   ├── screens/                  ← Home / Settings (Compose)
-│   ├── theme/                    ← Material 3 + dynamic color
-│   └── components/
-└── utils/
-    └── ModuleStatus.kt           ← `hookedFlag` field flipped by the hook
-```
-
----
-
-## Build
-
-```bash
-./gradlew :app:assembleDebug
-```
-
-Stack:
-
-| Layer | Version |
-|---|---|
-| Android Gradle Plugin | 8.13.2 |
-| Kotlin | 2.2.10 |
-| Compose Compiler Gradle Plugin | 2.2.10 |
-| KSP | 2.2.10-2.0.2 |
-| Compose BOM | 2026.05.00 |
-| AndroidX core-ktx / activity-compose / navigation-compose | 1.18.0 / 1.13.0 / 2.9.8 |
-| YukiHookAPI | 1.3.1 |
-| KavaRef (core + extension) | 1.0.2 |
-| Xposed API | 82 (`compileOnly`) |
-| compileSdk / targetSdk / minSdk | 36 / 36 / 26 |
-
-Repos: `google()`, `mavenCentral()`, `https://api.xposed.info/`, `https://jitpack.io` (the last for the FreeReflection transitive dep pulled in by KavaRef).
-
----
+- Rooted Android 8.0 or newer (`arm64-v8a`)
+- An Xposed framework — [LSPosed](https://github.com/LSPosed/LSPosed) on
+  Magisk, or [zygisk-vector](https://github.com/HuskyDG/zygisk-vector) +
+  LSPosed on KernelSU / APatch
+- Google Photos installed
 
 ## Install
 
-1. Root the device with **Magisk**, **KernelSU**, or **APatch**.
-2. Install an Xposed framework: [LSPosed](https://github.com/LSPosed/LSPosed) on Magisk, or [zygisk-vector](https://github.com/HuskyDG/zygisk-vector) + LSPosed on KernelSU.
-3. Install the APK and enable the module.
-4. Scope it to **Google Photos** **and** to **the module itself** — without the latter, the home screen stays on *Module Not Active* even when the hook is working.
-5. Force-stop Google Photos, open the module, pick a target Pixel, reopen Photos.
+1. Download the latest **`PixelMask-x.y.z.apk`** from
+   [Releases](https://github.com/kinginu/PixelMask/releases/latest).
+2. Install the APK like any other.
+3. Open **LSPosed Manager** → enable PixelMask.
+4. **Scope it to Google Photos *and* to PixelMask itself.** Both. Without
+   scoping the module to itself, the home screen sticks on *Module Not Active*
+   even when the hook is working.
+5. Force-stop Google Photos (the next section walks you through it from inside
+   the app).
 
-### Tested
+## Use it
 
-- KernelSU + zygisk-vector + LSPosed on Android 14+ (current dev target — Pixel XL profile, unlimited Original storage confirmed working)
-- Magisk + LSPosed (BaltiApps's original target)
+1. Open **PixelMask** → switch to the **Settings** tab.
+2. Tap **Target Device** and pick the Pixel you want Photos to think you're on
+   (see [Which Pixel should I pick?](#which-pixel-should-i-pick) below).
+3. Tap **Stop Google Photos in Settings** — that opens Android's app-info page
+   for Photos. Tap *Force stop*. (We can't force-stop another app from inside
+   PixelMask; only the system can.)
+4. Tap **Open Google Photos** and let it start fresh.
 
----
+That's it. The next time Photos starts, it sees the Pixel you picked.
 
-## Branching & releases
+## Did it actually work?
 
-**Branches** — trunk-based, single long-lived branch.
+Photos doesn't pop up a "you're a Pixel now" banner, so this is the bit that
+trips people up the most. Open Photos → tap your Google account icon
+(top-right) → **Photos settings** → **Backup**. If the spoof is working,
+you'll see this line:
 
-| Branch | Purpose |
+> **This Pixel can back up unlimited photos & videos at no charge.**
+
+![Photos backup proof flow](docs/banner-proof.png)
+
+If that line isn't there, the hook didn't fire. Common causes: forgot to
+force-stop Photos after changing the target Pixel; forgot to scope the module
+to itself in LSPosed; another module (`tricky_store`, `shamiko`,
+`hidemyapplist`, …) is hiding LSPosed from Photos.
+
+## Which Pixel should I pick?
+
+| Target | What you get |
 |---|---|
-| `main` | Always green, always shippable. Direct commits OK for solo work; non-trivial changes go through short-lived `feature/*` or `fix/*` branches merged via PR. |
-| `feature/<topic>`, `fix/<topic>` | Short-lived. Created locally or via PR. Deleted after merge. |
+| **Pixel** *(default)* | **Lifetime unlimited Original-quality backup.** The original 2016 Pixel is the only model whose perk Google never rolled back. |
+| Pixel 2 – Pixel 5 | Unlimited *Storage Saver* (compressed) backup. Useful if you want lots of backup but don't need full resolution. |
+| Pixel 6 / 7 (Pro) | No notable Photos perk — Google ended the storage benefit for these generations. Pick one only if you're chasing a specific feature gate. |
+| Pixel 8 Pro | Video Boost, Night Sight Video. |
+| Pixel 9 Pro XL | Add Me, Reimagine, unlimited Magic Editor. |
+| Pixel 10 Pro XL | Latest Pixel-first AI features. |
 
-No `develop`, no `release/*`, no `hotfix/*` — flat is good for a one-person module.
+If you came here for free unlimited storage, **the original Pixel** is what
+you want. The defaults are already set to it.
 
-**Tags** — releases get a tag in the form **`<versionCode>-<versionName>`** (e.g. `7-1.0.6`). The `versionCode` is a monotonic int the OS uses for the install-upgrade decision; `versionName` is the human-readable semver. The Release Module workflow tags this automatically — no need to tag by hand.
+## Reporting
 
-**Continuous builds (debug)** — every push to `main` and every PR runs `./gradlew :app:assembleDebug` and uploads the APK as a workflow artifact (`PixelMask-debug-<sha>`). 14-day retention. Find them under *Actions → Build Debug → \<run\> → Artifacts*.
+The Home tab has two report buttons that pre-fill a GitHub issue with
+everything we need (your real device, Android version, the Pixel you spoofed
+as, module version):
 
-**Release process**
+- **Report — Working** — tells us a new device combo works, helps build the
+  compatibility matrix.
+- **Report — Not Working** — opens a Not-Working template; please attach the
+  LSPosed module log if you can grab it from
+  *LSPosed Manager → Modules → PixelMask → Module logs*.
 
-1. Land everything you want shipped on `main`.
-2. *Actions* → **Release Module** → **Run workflow**, fill in:
-   - `version_name` → e.g. `1.0.6` (semver, no leading `v`)
-   - `changelog` → optional, copy from the *Release Drafter* draft
-3. The workflow:
-   1. Reads the previous `latest_version_code` from `update_info.json`, increments by 1
-   2. Updates `update_info.json` and pushes that commit back to `main`
-   3. Decodes the release keystore from `RELEASE_KEYSTORE_B64` (a GitHub Actions secret, see *Signing* below) and builds `assembleRelease` signed with it
-   4. Renames the APK to `PixelMask-<versionName>.apk`
-   5. Creates a GitHub Release tagged `<code>-<name>` with the APK attached
-4. The in-app updater fetches `update_info.json` from `main` and points users at the new release.
+## Updates
 
-**Signing** — releases are signed by a single long-lived keystore stored as repo secrets. Devices that already have an older PixelMask install can upgrade in place; signature stays the same forever. The workflow consumes four secrets: `RELEASE_KEYSTORE_B64` (base64 of the keystore file), `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. Generate the keystore once locally with `keytool -genkey -keyalg RSA -keysize 2048 -validity 36500`, base64-encode it, paste into Settings → Secrets → Actions, and back the original up offline (lose the file or its passwords and you can never push another update).
+The Home tab's update card hits `update_info.json` on this repo and points at
+the latest release if there is one newer than what you have. Tap the card to
+download. Re-installing the APK on top is enough — your settings are kept.
 
----
+## For developers
+
+Build instructions, hook architecture, the asset/banner pipeline, and the
+release process all live in [docs/INTERNALS.md](docs/INTERNALS.md).
 
 ## Credits
 
-- Based on [Pixelify-Google-Photos](https://github.com/BaltiApps/Pixelify-Google-Photos) by BaltiApps (MIT, EOL 2024). Thank you for the original work.
-- Launcher icon adapted from [Now in Android](https://github.com/android/nowinandroid) by The Android Open Source Project (Apache-2.0). The Bugdroid silhouette path is unchanged; the original `{}` mark above it was removed and replaced with a 4-blade pinwheel.
+- Forked from [BaltiApps/Pixelify-Google-Photos](https://github.com/BaltiApps/Pixelify-Google-Photos).
+  Thank you for the original work.
+- Launcher icon adapted from [Now in Android](https://github.com/android/nowinandroid)
+  by The Android Open Source Project (Apache-2.0). The Bugdroid silhouette
+  path is unchanged; the original `{}` mark above it was replaced with a
+  4-blade pinwheel.
 
 ## License
 
@@ -161,4 +124,6 @@ MIT — see [LICENSE](LICENSE).
 
 ## Disclaimer
 
-For research and educational use. No warranty. The user is responsible for any use of the module, including data loss or legal consequences.
+For research and educational use. No warranty. You are responsible for any
+use of the module, including data loss or legal consequences in your
+jurisdiction.
