@@ -34,7 +34,7 @@ body:
     id: spoof-target
     attributes:
       label: Spoof target
-      placeholder: e.g. Pixel XL
+      placeholder: e.g. Pixel 5
     validations:
       required: true
 

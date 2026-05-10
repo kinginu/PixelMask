@@ -1,6 +1,7 @@
 package com.kinginu.pixelmask.ui.screens
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,8 @@ import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -43,16 +46,28 @@ fun HomeScreen(
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-    val moduleState = remember {
-        val hooked = ModuleStatus.isModuleActive()
-        val enabled = context
-            .getSharedPreferences(Constants.SHARED_PREF_FILE_NAME, Context.MODE_PRIVATE)
-            .getBoolean(Constants.PREF_MODULE_ENABLED, true)
-        when {
-            !hooked -> ModuleState.NOT_LOADED
-            !enabled -> ModuleState.DISABLED
-            else -> ModuleState.ACTIVE
+    val prefs = remember(context) {
+        context.getSharedPreferences(Constants.SHARED_PREF_FILE_NAME, Context.MODE_PRIVATE)
+    }
+    // Track PREF_MODULE_ENABLED reactively so toggling the master switch in Settings
+    // immediately re-renders the StatusCard when the user navigates back here.
+    // The initial value is remembered separately so produceState's argument doesn't
+    // re-read the pref on every recomposition (which would discard the value but still
+    // hit SharedPreferences each frame).
+    val initialEnabled = remember(prefs) { prefs.getBoolean(Constants.PREF_MODULE_ENABLED, true) }
+    val moduleEnabled by produceState(initialValue = initialEnabled, prefs) {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == Constants.PREF_MODULE_ENABLED) {
+                value = prefs.getBoolean(Constants.PREF_MODULE_ENABLED, true)
+            }
         }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        awaitDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+    val moduleState = when {
+        !ModuleStatus.isModuleActive() -> ModuleState.NOT_LOADED
+        !moduleEnabled -> ModuleState.DISABLED
+        else -> ModuleState.ACTIVE
     }
     val isUpdateAvailable = updateUrl != null
     val appName = stringResource(R.string.app_name)

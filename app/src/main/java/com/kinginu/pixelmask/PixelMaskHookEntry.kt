@@ -4,7 +4,6 @@ import com.kinginu.pixelmask.Constants.PACKAGE_NAME_GOOGLE_PHOTOS
 import com.kinginu.pixelmask.Constants.PREF_DEVICE_TO_SPOOF
 import com.kinginu.pixelmask.Constants.PREF_ENABLE_VERBOSE_LOGS
 import com.kinginu.pixelmask.Constants.PREF_MODULE_ENABLED
-import com.kinginu.pixelmask.Constants.PREF_STRICTLY_CHECK_GOOGLE_PHOTOS
 import com.kinginu.pixelmask.Constants.SHARED_PREF_FILE_NAME
 import com.kinginu.pixelmask.spoof.DeviceProps
 import com.highcapable.kavaref.KavaRef.Companion.resolve
@@ -14,6 +13,7 @@ import com.highcapable.yukihookapi.hook.factory.toClass
 import com.highcapable.yukihookapi.hook.log.YLog
 import com.highcapable.yukihookapi.hook.xposed.proxy.IYukiHookXposedInit
 import de.robv.android.xposed.XposedHelpers
+import kotlin.reflect.KClass
 
 @InjectYukiHookWithXposed
 class PixelMaskHookEntry : IYukiHookXposedInit {
@@ -40,9 +40,6 @@ class PixelMaskHookEntry : IYukiHookXposedInit {
 
             if (!sharedPrefs.getBoolean(PREF_MODULE_ENABLED, true)) return@loadApp
 
-            if (sharedPrefs.getBoolean(PREF_STRICTLY_CHECK_GOOGLE_PHOTOS, true) &&
-                packageName != PACKAGE_NAME_GOOGLE_PHOTOS) return@loadApp
-
             val verbose = sharedPrefs.getBoolean(PREF_ENABLE_VERBOSE_LOGS, false)
             val savedName = sharedPrefs.getString(PREF_DEVICE_TO_SPOOF, DeviceProps.defaultDeviceName)
             val device = DeviceProps.getDeviceProps(savedName)
@@ -55,52 +52,48 @@ class PixelMaskHookEntry : IYukiHookXposedInit {
             if (verbose) YLog.info("Spoofing $packageName as ${device.deviceName}")
 
             // Build.* are public static final; XposedHelpers handles the final-modifier bypass.
-            val buildClass = XposedHelpers.findClass("android.os.Build", appClassLoader)
-            device.props.forEach { (key, value) ->
-                XposedHelpers.setStaticObjectField(buildClass, key, value)
-                if (verbose) YLog.debug("DEVICE PROPS: $key - $value")
+            // findClass throws (rather than returning null) if android.os.Build isn't on
+            // appClassLoader — should never happen, but if it does we want to keep
+            // hasSystemFeature spoofing working instead of crashing the whole hook.
+            val buildClass = runCatching {
+                XposedHelpers.findClass("android.os.Build", appClassLoader)
+            }.getOrElse {
+                YLog.warn("Failed to resolve android.os.Build, skipping prop spoof", it)
+                null
+            }
+            buildClass?.let {
+                device.props.forEach { (key, value) ->
+                    XposedHelpers.setStaticObjectField(it, key, value)
+                    if (verbose) YLog.debug("DEVICE PROPS: $key - $value")
+                }
             }
 
             // Hook hasSystemFeature(String) and hasSystemFeature(String, int).
             val pmClass = "android.app.ApplicationPackageManager".toClass(appClassLoader)
 
-            pmClass.resolve().firstMethod {
-                name = "hasSystemFeature"
-                parameters(String::class)
-            }.hook {
-                before {
-                    val featureName = args[0]?.toString() ?: return@before
-                    when (featureName) {
-                        in featuresToEnable -> {
-                            result = true
-                            if (verbose) YLog.debug("TRUE - feature: $featureName")
-                        }
-                        in featuresToBlock -> {
-                            result = false
-                            if (verbose) YLog.debug("FALSE - feature: $featureName")
+            fun hookHasSystemFeature(vararg paramTypes: KClass<*>) {
+                pmClass.resolve().firstMethod {
+                    name = "hasSystemFeature"
+                    parameters(*paramTypes)
+                }.hook {
+                    before {
+                        val featureName = args[0]?.toString() ?: return@before
+                        when (featureName) {
+                            in featuresToEnable -> {
+                                result = true
+                                if (verbose) YLog.debug("TRUE - feature: $featureName")
+                            }
+                            in featuresToBlock -> {
+                                result = false
+                                if (verbose) YLog.debug("FALSE - feature: $featureName")
+                            }
                         }
                     }
                 }
             }
 
-            pmClass.resolve().firstMethod {
-                name = "hasSystemFeature"
-                parameters(String::class, Int::class)
-            }.hook {
-                before {
-                    val featureName = args[0]?.toString() ?: return@before
-                    when (featureName) {
-                        in featuresToEnable -> {
-                            result = true
-                            if (verbose) YLog.debug("TRUE - feature: $featureName")
-                        }
-                        in featuresToBlock -> {
-                            result = false
-                            if (verbose) YLog.debug("FALSE - feature: $featureName")
-                        }
-                    }
-                }
-            }
+            hookHasSystemFeature(String::class)
+            hookHasSystemFeature(String::class, Int::class)
         }
     }
 }

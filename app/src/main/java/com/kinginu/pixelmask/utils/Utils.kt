@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
+import androidx.core.net.toUri
 import com.kinginu.pixelmask.BuildConfig
 import com.kinginu.pixelmask.Constants
 import com.kinginu.pixelmask.R
@@ -18,19 +19,32 @@ object Utils {
     // here would silently fail — so we just hand the user off to Settings, where the *Force
     // stop* button is one tap away.
     fun openAppInfo(packageName: String, context: Context) {
-        Toast.makeText(context, R.string.tap_force_stop_in_app_info, Toast.LENGTH_LONG).show()
         val intent = Intent().apply {
             action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
             data = Uri.fromParts("package", packageName, null)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
-        context.startActivity(intent)
+        try {
+            context.startActivity(intent)
+            // Only show the "tap force stop" hint after we successfully reached Settings;
+            // otherwise it's a misleading instruction sitting on top of a no-op.
+            Toast.makeText(context, R.string.tap_force_stop_in_app_info, Toast.LENGTH_LONG).show()
+        } catch (_: Exception) {
+            Toast.makeText(context, R.string.failed_to_launch_package, Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun openApplication(packageName: String, context: Context) {
+        // getLaunchIntentForPackage returns null when the package has no launcher activity
+        // (e.g. Photos uninstalled or disabled). Surface that to the user instead of
+        // silently doing nothing.
+        val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
+        if (launchIntent == null) {
+            Toast.makeText(context, R.string.failed_to_launch_package, Toast.LENGTH_SHORT).show()
+            return
+        }
         try {
-            val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
-            if (launchIntent != null) context.startActivity(launchIntent)
+            context.startActivity(launchIntent)
         } catch (_: Exception) {
             Toast.makeText(context, R.string.failed_to_launch_package, Toast.LENGTH_SHORT).show()
         }
@@ -46,7 +60,6 @@ object Utils {
         val spoofTarget = prefs.getString(Constants.PREF_DEVICE_TO_SPOOF, DeviceProps.defaultDeviceName)
             ?: DeviceProps.defaultDeviceName
         val masterEnabled = prefs.getBoolean(Constants.PREF_MODULE_ENABLED, true)
-        val strictPhotos  = prefs.getBoolean(Constants.PREF_STRICTLY_CHECK_GOOGLE_PHOTOS, true)
         val verboseLogs   = prefs.getBoolean(Constants.PREF_ENABLE_VERBOSE_LOGS, false)
 
         val device = "${Build.MANUFACTURER} ${Build.MODEL}"
@@ -59,11 +72,10 @@ object Utils {
             appendLine("Build fingerprint:   ${Build.FINGERPRINT}")
             appendLine("Spoof target:        $spoofTarget")
             appendLine("Master switch:       $masterEnabled")
-            appendLine("Strict-Photos check: $strictPhotos")
             appendLine("Verbose logs:        $verboseLogs")
         }
 
-        val uri = Uri.parse("${Constants.REPO_URL_PUBLIC}/issues/new").buildUpon()
+        val uri = "${Constants.REPO_URL_PUBLIC}/issues/new".toUri().buildUpon()
             .appendQueryParameter("template", template)
             .appendQueryParameter("module-version", BuildConfig.VERSION_NAME)
             .appendQueryParameter("android-version", androidVersion)

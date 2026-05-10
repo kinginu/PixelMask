@@ -3,9 +3,9 @@ package com.kinginu.pixelmask
 import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.net.toUri
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -65,9 +66,11 @@ import com.kinginu.pixelmask.Constants.UPDATE_INFO_URL
 import com.kinginu.pixelmask.ui.screens.HomeScreen
 import com.kinginu.pixelmask.ui.screens.SettingScreen
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.net.HttpURLConnection
 import java.net.URL
 
 class MainActivity : ComponentActivity() {
@@ -137,8 +140,15 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(Unit) { checkUpdate() }
 
         val rebootMessage = stringResource(R.string.please_force_stop_google_photos)
+        // Rapid toggling in Settings would otherwise queue a snackbar per change and the
+        // user has to wait through all of them. Cancel the previous job so only the most
+        // recent change ever shows.
+        var snackbarJob by remember { mutableStateOf<Job?>(null) }
         fun notifySettingChanged() {
-            coroutineScope.launch { snackbarHostState.showSnackbar(rebootMessage) }
+            snackbarJob?.cancel()
+            snackbarJob = coroutineScope.launch {
+                snackbarHostState.showSnackbar(rebootMessage)
+            }
         }
 
         val context = LocalContext.current
@@ -222,7 +232,18 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun checkUpdateAvailable(currentVersionCode: Long): String? = try {
-        val jsonString = URL(UPDATE_INFO_URL).readText()
+        // URL.readText() leaves both timeouts at 0 (= infinite), so a slow / hung CDN
+        // would block the IO coroutine forever. Open the connection ourselves and pin
+        // both timeouts to a few seconds.
+        val connection = (URL(UPDATE_INFO_URL).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 5_000
+            readTimeout = 5_000
+        }
+        val jsonString = try {
+            connection.inputStream.bufferedReader().use { it.readText() }
+        } finally {
+            connection.disconnect()
+        }
         if (jsonString.isNotBlank()) {
             val json = JSONObject(jsonString)
             val remoteVersion = json.getInt(FIELD_LATEST_VERSION_CODE)
@@ -240,7 +261,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openWebLink(url: String) {
-        startActivity(Intent(Intent.ACTION_VIEW).apply { data = Uri.parse(url) })
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+        } catch (_: Exception) {
+            // No browser / handler — don't crash, just tell the user.
+            Toast.makeText(this, R.string.failed_to_launch_package, Toast.LENGTH_SHORT).show()
+        }
     }
 
     sealed class Screen(val route: String, val labelRes: Int, val icon: ImageVector) {

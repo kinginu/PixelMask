@@ -30,7 +30,6 @@
     <string name="module_is_active">Module is active</string>
     <string name="module_is_not_active">Module is disabled</string>
     <string name="target_device">Target Device</string>
-    <string name="spoof_only_google_photos">Spoof only Google Photos</string>
     <string name="enable_verbose_logs">Enable verbose logs</string>
     <string name="actions">Actions</string>
     <string name="stop_google_photos_via_settings">Stop Google Photos in Settings</string>

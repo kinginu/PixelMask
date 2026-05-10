@@ -80,15 +80,14 @@ fun SettingScreen(onSettingChanged: () -> Unit) {
         mutableStateOf(pref.getBoolean(Constants.PREF_MODULE_ENABLED, true))
     }
     var deviceToSpoof by remember {
+        // If the saved name doesn't match any current device entry (e.g. an old name like
+        // "Pixel XL" that we removed in a release), fall back to the default for display.
+        // We don't write the corrected value back here — the hook entry has the same
+        // fallback, and the next user pick will overwrite the stale pref anyway.
         val saved = pref.getString(Constants.PREF_DEVICE_TO_SPOOF, null)
         val validated = saved?.takeIf { name -> DeviceProps.allDevices.any { it.deviceName == name } }
-            ?: DeviceProps.defaultDeviceName.also {
-                pref.edit().putString(Constants.PREF_DEVICE_TO_SPOOF, it).commit()
-            }
+            ?: DeviceProps.defaultDeviceName
         mutableStateOf(validated)
-    }
-    var spoofOnlyPhotos by remember {
-        mutableStateOf(pref.getBoolean(Constants.PREF_STRICTLY_CHECK_GOOGLE_PHOTOS, true))
     }
     var verboseLogs by remember {
         mutableStateOf(pref.getBoolean(Constants.PREF_ENABLE_VERBOSE_LOGS, false))
@@ -128,18 +127,6 @@ fun SettingScreen(onSettingChanged: () -> Unit) {
                 currentDevice = deviceToSpoof,
                 enabled = moduleEnabled,
                 onClick = { showDeviceSheet = true }
-            )
-
-            SoftDivider()
-
-            SettingSwitchItem(
-                title = stringResource(R.string.spoof_only_google_photos),
-                checked = spoofOnlyPhotos,
-                enabled = moduleEnabled,
-                onCheckedChange = {
-                    spoofOnlyPhotos = it
-                    saveBoolean(Constants.PREF_STRICTLY_CHECK_GOOGLE_PHOTOS, it)
-                }
             )
 
             SoftDivider()
