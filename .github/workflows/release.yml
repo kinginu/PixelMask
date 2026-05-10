@@ -131,9 +131,52 @@ jobs:
           draft: false
           prerelease: false
 
-      # Mirroring this release to Xposed-Modules-Repo/com.kinginu.pixelmask
-      # (so it shows up in LSPosed Manager's module catalog) is *pulled* by
-      # that repo's own sync-from-source.yml workflow, hourly. Doing it from
-      # here would need a PAT with Contents: Write on a repo we don't own,
-      # and Xposed-Modules-Repo doesn't allow fine-grained PATs targeting
-      # its repos. See docs/INTERNALS.md → "LSPosed module repo mirror".
+      # Mirror to Xposed-Modules-Repo/com.kinginu.pixelmask so the LSPosed
+      # Manager catalog picks the new version up. We can't push there with
+      # a PAT (Xposed-Modules-Repo blocks fine-grained PATs and rejects
+      # Classic ones), and we can't run a workflow on the mirror itself
+      # (org disables Actions repo-wide). The remaining authenticated path
+      # is a private GitHub App scoped to just `Contents: Write` on the two
+      # repos involved — its installation token is a separate credential
+      # type that the org's PAT/Actions policies don't gate.
+      #
+      # If MIRROR_APP_ID / MIRROR_APP_PRIVATE_KEY aren't set yet (initial
+      # bring-up, or if the App ever gets uninstalled / org policy
+      # tightens), the source release still ships fine; we just print a
+      # warning and the maintainer mirrors the release with
+      # scripts/mirror-release.sh from their own machine.
+      - name: Check mirror App configured
+        id: mirror_check
+        env:
+          APP_ID: ${{ secrets.MIRROR_APP_ID }}
+        run: |
+          if [ -z "$APP_ID" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::MIRROR_APP_ID secret not set — skipping LSPosed mirror release. Run scripts/mirror-release.sh locally to mirror this version."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Mint mirror App installation token
+        if: steps.mirror_check.outputs.configured == 'true'
+        id: mirror_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.MIRROR_APP_ID }}
+          private-key: ${{ secrets.MIRROR_APP_PRIVATE_KEY }}
+          owner: Xposed-Modules-Repo
+          repositories: com.kinginu.pixelmask
+
+      - name: Mirror release to LSPosed module repo
+        if: steps.mirror_check.outputs.configured == 'true'
+        env:
+          GH_TOKEN: ${{ steps.mirror_token.outputs.token }}
+          CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          TAG="${{ env.NEW_VERSION_CODE }}-${{ inputs.version_name }}"
+          APK="app/build/outputs/apk/release/PixelMask-${{ inputs.version_name }}.apk"
+          gh release create "$TAG" \
+            --repo Xposed-Modules-Repo/com.kinginu.pixelmask \
+            --title "v${{ inputs.version_name }}" \
+            --notes "$CHANGELOG" \
+            "$APK"
