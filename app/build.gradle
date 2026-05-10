@@ -38,6 +38,24 @@ android {
     }
 }
 
+// YukiHookAPI's KSP processor (com.highcapable.yukihookapi:ksp-xposed) writes
+// assets/xposed_init and resources/META-INF/yukihookapi_init into the *source*
+// tree, but AGP only wires KSP into compileKotlin — not into the asset/Java-
+// resource merge tasks. On a fresh checkout (CI) the files aren't on disk when
+// merge{Variant}Assets / merge{Variant}JavaResource snapshot their inputs, so
+// the published APK ships without assets/xposed_init. LSPosed then sees the
+// xposed manifest meta-data (so the module appears in its list) but can't find
+// the entry-class pointer, and the Manager's enable toggle silently no-ops.
+// Locally this races invisibly because previous builds leave the files in the
+// source tree. Force the merge tasks to wait on KSP so the files exist when
+// inputs are read.
+android.applicationVariants.configureEach { variant ->
+    def cap = variant.name.capitalize()
+    def kspTask = "ksp${cap}Kotlin"
+    tasks.named("merge${cap}Assets").configure { dependsOn(kspTask) }
+    tasks.named("merge${cap}JavaResource").configure { dependsOn(kspTask) }
+}
+
 dependencies {
     implementation 'androidx.core:core-ktx:1.18.0'
     implementation 'androidx.activity:activity-compose:1.13.0'
