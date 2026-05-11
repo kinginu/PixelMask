@@ -54,7 +54,7 @@ private fun ActionItem(item: ActionCardItemData) {
         Icon(
             imageVector = item.icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = item.color ?: MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

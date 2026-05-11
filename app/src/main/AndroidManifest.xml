@@ -5,9 +5,11 @@
 
     <queries>
         <package android:name="com.google.android.apps.photos" />
+        <package android:name="com.google.android.gms" />
     </queries>
 
     <application
+        android:name=".PixelMaskApp"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:icon="@mipmap/ic_launcher"
@@ -37,6 +39,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

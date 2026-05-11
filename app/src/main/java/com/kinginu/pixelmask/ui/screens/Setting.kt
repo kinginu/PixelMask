@@ -1,6 +1,12 @@
 package com.kinginu.pixelmask.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import android.content.SharedPreferences
+import android.os.Build
+import android.os.PersistableBundle
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kinginu.pixelmask.Constants
 import com.kinginu.pixelmask.R
@@ -32,11 +38,10 @@ import com.kinginu.pixelmask.spoof.DeviceProps
 import com.kinginu.pixelmask.ui.components.ActionCard
 import com.kinginu.pixelmask.ui.components.ActionCardItemData
 import com.kinginu.pixelmask.ui.components.ConfigurationCard
+import com.kinginu.pixelmask.ui.components.DebuggingCard
 import com.kinginu.pixelmask.ui.components.DeviceSelectionItem
 import com.kinginu.pixelmask.ui.components.DeviceSelectionSheet
 import com.kinginu.pixelmask.ui.components.MasterSwitchCard
-import com.kinginu.pixelmask.ui.components.SettingSwitchItem
-import com.kinginu.pixelmask.ui.components.SoftDivider
 import com.kinginu.pixelmask.utils.ModuleStatus
 import com.kinginu.pixelmask.utils.Utils
 import kotlinx.coroutines.Dispatchers
@@ -92,6 +97,34 @@ fun SettingScreen(onSettingChanged: () -> Unit) {
     var verboseLogs by remember {
         mutableStateOf(pref.getBoolean(Constants.PREF_ENABLE_VERBOSE_LOGS, false))
     }
+    var debuggingExpanded by remember { mutableStateOf(false) }
+    var capturedAuthData by remember {
+        mutableStateOf(pref.getString(Constants.PREF_CAPTURED_AUTH_DATA, null).orEmpty())
+    }
+
+    DisposableEffect(pref) {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
+            if (key == Constants.PREF_CAPTURED_AUTH_DATA) {
+                capturedAuthData = sp.getString(key, null).orEmpty()
+            }
+        }
+        pref.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { pref.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+
+    fun copyAuthDataToClipboard() {
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("auth_data", capturedAuthData)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            clip.description.extras = PersistableBundle().apply {
+                putBoolean("android.content.extra.IS_SENSITIVE", true)
+            }
+        }
+        clipboard.setPrimaryClip(clip)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            Toast.makeText(context, R.string.auth_data_copied, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     if (showDeviceSheet) {
         DeviceSelectionSheet(
@@ -128,19 +161,19 @@ fun SettingScreen(onSettingChanged: () -> Unit) {
                 enabled = moduleEnabled,
                 onClick = { showDeviceSheet = true }
             )
-
-            SoftDivider()
-
-            SettingSwitchItem(
-                title = stringResource(R.string.enable_verbose_logs),
-                checked = verboseLogs,
-                enabled = moduleEnabled,
-                onCheckedChange = {
-                    verboseLogs = it
-                    saveBoolean(Constants.PREF_ENABLE_VERBOSE_LOGS, it)
-                }
-            )
         }
+
+        DebuggingCard(
+            expanded = debuggingExpanded,
+            onExpandToggle = { debuggingExpanded = !debuggingExpanded },
+            verboseLogs = verboseLogs,
+            onVerboseLogsChange = {
+                verboseLogs = it
+                saveBoolean(Constants.PREF_ENABLE_VERBOSE_LOGS, it)
+            },
+            authData = capturedAuthData,
+            onCopyAuthData = ::copyAuthDataToClipboard,
+        )
 
         Text(
             text = stringResource(R.string.actions),

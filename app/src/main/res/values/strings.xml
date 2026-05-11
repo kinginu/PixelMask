@@ -36,8 +36,17 @@
     <string name="module_is_not_active">Module is disabled</string>
     <string name="target_device">Target Device</string>
     <string name="enable_verbose_logs">Enable verbose logs</string>
+    <string name="debugging">Debugging</string>
+    <string name="auth_data_title">Google Photos auth_data</string>
+    <string name="auth_data_empty">Not captured yet</string>
+    <string name="auth_data_setup_hint_prefix">Keep this screen open and launch</string>
+    <string name="auth_data_setup_hint_package">com.google.android.apps.photos</string>
+    <string name="auth_data_setup_hint_suffix">— the bearer token will be captured automatically.</string>
+    <string name="copy_to_clipboard">Copy</string>
+    <string name="auth_data_copied">auth_data copied to clipboard</string>
+    <string name="auth_data_warning">Sensitive — do not share. Anyone with this string can access this Google account\'s Photos.</string>
     <string name="actions">Actions</string>
-    <string name="stop_google_photos_via_settings">Stop Google Photos in Settings</string>
+    <string name="stop_google_photos_via_settings">Force stop Google Photos</string>
     <string name="open_google_photos">Open Google Photos</string>
     <string name="please_force_stop_google_photos">Please force stop Google Photos to take effect.</string>
 
