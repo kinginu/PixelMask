@@ -1,0 +1,53 @@
+name: Verify LSPosed mirror token
+
+# Smoke test for LSPOSED_MIRROR_TOKEN. Exercises exactly what the release
+# workflow's mirror step does (gh release create against the mirror repo)
+# without touching the published catalog: creates a *draft* release with a
+# disposable tag, then deletes it.
+#
+# Drafts don't create the git tag and aren't visible to the LSPosed bot's
+# catalog scraper, so a successful run leaves no trace on the mirror.
+#
+# Run from Actions → "Verify LSPosed mirror token" → "Run workflow" any time
+# you rotate the PAT or want to confirm it still works.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run mirror-write smoke test
+        env:
+          GH_TOKEN: ${{ secrets.LSPOSED_MIRROR_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::LSPOSED_MIRROR_TOKEN secret is not set"
+            exit 1
+          fi
+
+          MIRROR=Xposed-Modules-Repo/com.kinginu.pixelmask
+
+          echo "--- gh auth status (token identity / scopes) ---"
+          gh auth status
+
+          echo "--- gh api repos/$MIRROR (verify visibility) ---"
+          gh api "repos/$MIRROR" --jq '{full_name, permissions}'
+
+          TAG="ci-verify-$(date -u +%Y%m%dT%H%M%SZ)"
+          echo "--- creating draft release with tag $TAG ---"
+          gh release create "$TAG" \
+            --repo "$MIRROR" \
+            --title "Token verification (delete-me)" \
+            --notes "Smoke test for LSPOSED_MIRROR_TOKEN. This draft is created and immediately deleted by .github/workflows/verify-lsposed-mirror.yml — if you see it sitting around, the cleanup step failed." \
+            --draft
+
+          echo "--- deleting the draft (also drops the tag if one was created) ---"
+          gh release delete "$TAG" \
+            --repo "$MIRROR" \
+            --cleanup-tag \
+            --yes
+
+          echo ""
+          echo "OK — LSPOSED_MIRROR_TOKEN can create and delete releases on $MIRROR."
