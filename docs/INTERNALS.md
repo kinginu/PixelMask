@@ -225,6 +225,30 @@ warns and exits 0 so the maintainer can rotate the token (or fall back to
 the local script) without a failed CI run blocking the rest of the
 pipeline.
 
+### Rotating the PAT (annual)
+
+GitHub Classic PATs max out at 1-year expiry, so this token needs to be
+re-issued every year. The new one replaces the old in the same secret
+slot, no code change needed.
+
+1. Generate a new Classic PAT — same `Note` / `Scopes` (`public_repo`)
+   as the original. Set a fresh 1-year expiry.
+2. `kinginu/PixelMask` → **Settings → Secrets and variables → Actions** →
+   click `LSPOSED_MIRROR_TOKEN` → **Update secret**. Paste the new
+   `ghp_...` value, save.
+3. Verify the new token actually works *before* the next release: from
+   the Actions tab, run **Verify LSPosed mirror token** manually
+   (`workflow_dispatch`). It exercises the same path the release step
+   uses by creating a draft release on the mirror and deleting it. Green
+   tick = good to go for the next year.
+4. Revoke the old token from the **Tokens (classic)** page so it can't
+   be misused if it ever leaked while it was active.
+
+Set a calendar reminder a couple of weeks before expiry — the release
+step warns-and-skips on a missing/expired token rather than failing
+loudly, so a stale PAT can quietly go unmirrored for a release or two
+if nobody's watching.
+
 ### Fallback: local helper script
 
 If the PAT is in mid-rotation or temporarily revoked,
