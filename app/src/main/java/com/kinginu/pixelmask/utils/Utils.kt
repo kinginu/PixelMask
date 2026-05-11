@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
+import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.net.toUri
 import com.kinginu.pixelmask.BuildConfig
 import com.kinginu.pixelmask.Constants
@@ -65,10 +66,20 @@ object Utils {
         val device = "${Build.MANUFACTURER} ${Build.MODEL}"
         val androidVersion = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})"
 
+        // Photos version is the single most useful field for triage: a regression
+        // from a Photos update is a common cause of "not working" reports, and
+        // users routinely forget to mention which build they're on. Permitted by
+        // the <queries> entry for com.google.android.apps.photos in the manifest.
+        val photosVersion = runCatching {
+            val pi = context.packageManager.getPackageInfo(Constants.PACKAGE_NAME_GOOGLE_PHOTOS, 0)
+            "${pi.versionName} (code ${PackageInfoCompat.getLongVersionCode(pi)})"
+        }.getOrDefault("not installed")
+
         val diag = buildString {
             appendLine("PixelMask:           ${BuildConfig.VERSION_NAME} (code ${BuildConfig.VERSION_CODE})")
             appendLine("Real device:         $device")
             appendLine("Android:             $androidVersion")
+            appendLine("Photos:              $photosVersion")
             appendLine("Build fingerprint:   ${Build.FINGERPRINT}")
             appendLine("Spoof target:        $spoofTarget")
             appendLine("Master switch:       $masterEnabled")
