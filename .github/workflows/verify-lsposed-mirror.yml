@@ -43,10 +43,13 @@ jobs:
             --notes "Smoke test for LSPOSED_MIRROR_TOKEN. This draft is created and immediately deleted by .github/workflows/verify-lsposed-mirror.yml — if you see it sitting around, the cleanup step failed." \
             --draft
 
-          echo "--- deleting the draft (also drops the tag if one was created) ---"
+          echo "--- deleting the draft ---"
+          # Drafts don't create the git tag until published, so no
+          # `--cleanup-tag` here — that flag would error out trying to
+          # delete a ref that never existed even though the release
+          # itself deletes fine.
           gh release delete "$TAG" \
             --repo "$MIRROR" \
-            --cleanup-tag \
             --yes
 
           echo ""
