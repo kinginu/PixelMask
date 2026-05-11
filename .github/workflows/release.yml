@@ -132,47 +132,29 @@ jobs:
           prerelease: false
 
       # Mirror to Xposed-Modules-Repo/com.kinginu.pixelmask so the LSPosed
-      # Manager catalog picks the new version up. We can't push there with
-      # a PAT (Xposed-Modules-Repo blocks fine-grained PATs and rejects
-      # Classic ones), and we can't run a workflow on the mirror itself
-      # (org disables Actions repo-wide). The remaining authenticated path
-      # is a private GitHub App scoped to just `Contents: Write` on the two
-      # repos involved — its installation token is a separate credential
-      # type that the org's PAT/Actions policies don't gate.
+      # Manager catalog picks the new version up.
       #
-      # If MIRROR_APP_ID / MIRROR_APP_PRIVATE_KEY aren't set yet (initial
-      # bring-up, or if the App ever gets uninstalled / org policy
-      # tightens), the source release still ships fine; we just print a
-      # warning and the maintainer mirrors the release with
-      # scripts/mirror-release.sh from their own machine.
-      - name: Check mirror App configured
-        id: mirror_check
-        env:
-          APP_ID: ${{ secrets.MIRROR_APP_ID }}
-        run: |
-          if [ -z "$APP_ID" ]; then
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::MIRROR_APP_ID secret not set — skipping LSPosed mirror release. Run scripts/mirror-release.sh locally to mirror this version."
-          else
-            echo "configured=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Mint mirror App installation token
-        if: steps.mirror_check.outputs.configured == 'true'
-        id: mirror_token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.MIRROR_APP_ID }}
-          private-key: ${{ secrets.MIRROR_APP_PRIVATE_KEY }}
-          owner: Xposed-Modules-Repo
-          repositories: com.kinginu.pixelmask
-
+      # Auth: a Classic PAT with `public_repo` scope, stored as
+      # LSPOSED_MIRROR_TOKEN. Classic PATs work here even though the org
+      # disables fine-grained PATs — they're a separate auth surface
+      # tied to the issuing user rather than gated by the resource org's
+      # settings. The token's scope is the whole account's public repos,
+      # not just this mirror, so treat it accordingly (short expiry,
+      # rotate on suspicion of leak).
+      #
+      # If the secret isn't set the source-repo release still goes out
+      # — we just print a warning and skip the mirror step so a missing
+      # / expired token can't block ships. Fallback for that case is
+      # scripts/mirror-release.sh from the maintainer's local clone.
       - name: Mirror release to LSPosed module repo
-        if: steps.mirror_check.outputs.configured == 'true'
         env:
-          GH_TOKEN: ${{ steps.mirror_token.outputs.token }}
+          GH_TOKEN: ${{ secrets.LSPOSED_MIRROR_TOKEN }}
           CHANGELOG: ${{ inputs.changelog }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::LSPOSED_MIRROR_TOKEN secret not set — skipping LSPosed mirror release. Run scripts/mirror-release.sh locally to mirror this version."
+            exit 0
+          fi
           TAG="${{ env.NEW_VERSION_CODE }}-${{ inputs.version_name }}"
           APK="app/build/outputs/apk/release/PixelMask-${{ inputs.version_name }}.apk"
           gh release create "$TAG" \

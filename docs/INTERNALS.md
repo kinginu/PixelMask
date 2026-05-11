@@ -198,62 +198,61 @@ in-app module catalog scrapes. That repo only carries `SUMMARY.md`,
 code lives there.
 
 The release workflow's `Mirror release to LSPosed module repo` step pushes
-the just-built APK to the mirror automatically using a private **GitHub
-App** as the credential. App tokens are a separate auth surface from PATs,
-so they slip past the Xposed-Modules-Repo policies that block every other
-flow we tried (see "What we tried first" below).
+the just-built APK to the mirror using a **Classic PAT** stored as the
+`LSPOSED_MIRROR_TOKEN` secret. Fine-grained PATs and a scheduled workflow
+on the mirror are both blocked by org-level policy (see "What we tried
+first" below); Classic PATs slip through because they're tied to the
+issuing user account, not the resource org.
 
-### App setup (one-time)
+### Token setup (one-time)
 
-1. Go to https://github.com/settings/apps → **New GitHub App**, register a
-   personal App named e.g. *PixelMask Mirror Bot*.
-   - Homepage: `https://github.com/kinginu/PixelMask`
-   - Webhook: **uncheck Active** (we don't need callbacks)
-   - **Repository permissions** → **Contents**: *Read and write*. Leave
-     everything else at *No access*.
-   - "Where can this GitHub App be installed?": *Only on this account*.
-2. Create the App, then on its settings page hit **Generate a private key**
-   and download the `.pem`.
-3. Note the **App ID** at the top of the App settings.
-4. From the App's *Install App* tab, install on:
-   - `kinginu/PixelMask`
-   - `Xposed-Modules-Repo/com.kinginu.pixelmask`
-     (you're admin on this one because the `[submission]` bot invited you
-     when it created the mirror; the install request goes through without
-     org owner approval).
-5. In `kinginu/PixelMask` → **Settings → Secrets and variables → Actions**:
-   - `MIRROR_APP_ID` = the App ID from step 3
-   - `MIRROR_APP_PRIVATE_KEY` = the entire contents of the `.pem` file,
-     including the `-----BEGIN/END PRIVATE KEY-----` lines
+1. GitHub → **Settings** → **Developer settings** → **Personal access
+   tokens** → **Tokens (classic)** → **Generate new token (classic)**.
+2. *Note:* `PixelMask LSPosed mirror`. *Expiration:* 1 year (rotate before
+   expiry — the next release will warn-and-skip otherwise).
+3. *Scopes:* `public_repo` only. Don't tick `repo` — `public_repo` is
+   enough to create releases on a public repo we admin, and the narrower
+   scope limits blast radius if the token leaks.
+4. Generate, copy the `ghp_...` value once (GitHub won't show it again).
+5. In `kinginu/PixelMask` → **Settings → Secrets and variables → Actions**
+   → **New repository secret**:
+   - *Name:* `LSPOSED_MIRROR_TOKEN`
+   - *Secret:* the `ghp_...` value
 
-The next `Release Module` run will use those secrets to mint an
-installation token (scoped to just `contents:write` on the mirror) and
-mirror the release in the same job.
+The next `Release Module` run will mirror automatically. If the token gets
+revoked or expires, the source release still ships — the mirror step just
+warns and exits 0 so the maintainer can rotate the token (or fall back to
+the local script) without a failed CI run blocking the rest of the
+pipeline.
 
 ### Fallback: local helper script
 
-If the App ever stops working (revoked, org policy tightens, key rotation
-in progress), `scripts/mirror-release.sh` does the same job from a local
-clone using your personal `gh auth` session:
+If the PAT is in mid-rotation or temporarily revoked,
+`scripts/mirror-release.sh` does the same job from a local clone using
+your personal `gh auth` session:
 
 ```bash
 scripts/mirror-release.sh              # mirrors the source repo's "latest"
 scripts/mirror-release.sh 13-1.0.17    # mirrors a specific tag
 ```
 
-Idempotent — short-circuits if the tag is already mirrored.
+Idempotent — short-circuits if the tag is already mirrored. Useful for
+the very first release before the PAT is set up, and as a safety net
+during PAT rotation.
 
 ### What we tried first
 
 | Approach | Status |
 |---|---|
-| Push from `release.yml` using a Personal Access Token | Fine-grained PAT can't pick `Xposed-Modules-Repo` as a resource owner (org disables them); Classic PAT with `public_repo` is also rejected. No PAT issuable from a personal account works. |
-| Pull on the mirror via a scheduled GitHub Actions workflow | `GitHub Actions is disabled on this repository by the organization` — the org has Actions off across the board with no per-repo override. |
-| Push from `release.yml` using a GitHub App installation token | **Works.** App installs are gated on the *repository* admin approving them, not on org-wide PAT/Actions policy, so the gate doesn't fire here. |
+| Push from `release.yml` using a **fine-grained PAT** | Resource-owner dropdown on the token-creation page doesn't list `Xposed-Modules-Repo` at all — the org has fine-grained PATs disabled, so no token of this type can target the mirror. |
+| Pull on the mirror via a **scheduled GitHub Actions workflow** | API returns `GitHub Actions is disabled on this repository by the organization`. The org has Actions off org-wide with no per-repo override. |
+| Push from `release.yml` using a **GitHub App** installation token | Would have worked in principle (App auth is a separate surface) but adds enough setup overhead — register App, generate key, install on two repos, store ID + private key — that Classic PAT is the better cost-for-benefit. Revived from git history if needed. |
+| Push from `release.yml` using a **Classic PAT** with `public_repo` | **Current approach.** Tied to issuing user, not gated by the resource org's fine-grained policies. Verified working. |
 
-If a future policy shift re-opens the easier paths, revive the appropriate
-workflow from git history (commit `c89462f` for PAT-from-source; commit
-`722ca9e` for the scheduled-on-mirror variant).
+If a future policy shift re-opens the easier paths, revive the
+appropriate workflow from git history:
+- commit `722ca9e` — scheduled-on-mirror variant
+- commit `c9cd7a2` — GitHub App variant
 
 ## Tested environments
 
