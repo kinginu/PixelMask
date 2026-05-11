@@ -68,11 +68,14 @@ import com.kinginu.pixelmask.ui.screens.HomeScreen
 import com.kinginu.pixelmask.ui.screens.SettingScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+
+private const val CHECKING_MIN_VISIBLE_MS = 2_000L
 
 class MainActivity : ComponentActivity() {
 
@@ -137,9 +140,19 @@ class MainActivity : ComponentActivity() {
         fun checkUpdate() {
             coroutineScope.launch {
                 updateState = UpdateCheckState.Checking
-                updateState = withContext(Dispatchers.IO) {
+                val start = System.currentTimeMillis()
+                val result = withContext(Dispatchers.IO) {
                     checkUpdateAvailable(appVersionCode)
                 }
+                // On a healthy network the HTTP round-trip can finish in 50-100ms,
+                // so the Checking state would flash by faster than the user can
+                // register that anything happened. Hold the spinner for a minimum
+                // visible duration so taps always *look* like they did something.
+                val elapsed = System.currentTimeMillis() - start
+                if (elapsed < CHECKING_MIN_VISIBLE_MS) {
+                    delay(CHECKING_MIN_VISIBLE_MS - elapsed)
+                }
+                updateState = result
             }
         }
 

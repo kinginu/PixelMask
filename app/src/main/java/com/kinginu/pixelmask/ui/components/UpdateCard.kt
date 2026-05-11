@@ -76,10 +76,18 @@ fun UpdateCard(
     }
     val subtitle = when (state) {
         UpdateCheckState.Checking -> stringResource(R.string.update_please_wait)
-        is UpdateCheckState.UpToDate -> stringResource(
-            R.string.update_checked_at,
-            formatRelativeTime(state.checkedAt)
-        )
+        is UpdateCheckState.UpToDate -> {
+            // DateUtils renders sub-minute elapsed times as "0 minutes ago" on
+            // several locales/AOSP builds instead of the cleaner "Just now",
+            // so handle that bucket ourselves.
+            val now = System.currentTimeMillis()
+            val rel = if (now - state.checkedAt < DateUtils.MINUTE_IN_MILLIS) {
+                stringResource(R.string.update_just_now)
+            } else {
+                formatRelativeTime(state.checkedAt)
+            }
+            stringResource(R.string.update_checked_at, rel)
+        }
         is UpdateCheckState.UpdateAvailable -> stringResource(R.string.tap_to_download)
         is UpdateCheckState.Failed -> stringResource(R.string.update_tap_to_retry)
     }

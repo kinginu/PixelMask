@@ -21,6 +21,7 @@
     <string name="update_check_failed">Check failed</string>
     <string name="update_tap_to_retry">Tap to retry</string>
     <string name="update_checked_at">Checked %1$s</string>
+    <string name="update_just_now">just now</string>
     <string name="android_version">Android Version</string>
     <string name="device_model">Device Model</string>
     <string name="app_version">App Version</string>
