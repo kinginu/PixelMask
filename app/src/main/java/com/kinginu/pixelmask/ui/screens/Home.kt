@@ -34,12 +34,13 @@ import com.kinginu.pixelmask.ui.components.LinkCardItemData
 import com.kinginu.pixelmask.ui.components.ModuleState
 import com.kinginu.pixelmask.ui.components.StatusCard
 import com.kinginu.pixelmask.ui.components.UpdateCard
+import com.kinginu.pixelmask.ui.components.UpdateCheckState
 import com.kinginu.pixelmask.utils.ModuleStatus
 import com.kinginu.pixelmask.utils.Utils
 
 @Composable
 fun HomeScreen(
-    updateUrl: String?,
+    updateState: UpdateCheckState,
     appVersion: String,
     onOpenLink: (String) -> Unit,
     onCheckForUpdate: () -> Unit
@@ -69,7 +70,6 @@ fun HomeScreen(
         !moduleEnabled -> ModuleState.DISABLED
         else -> ModuleState.ACTIVE
     }
-    val isUpdateAvailable = updateUrl != null
     val appName = stringResource(R.string.app_name)
 
     Column(
@@ -82,8 +82,7 @@ fun HomeScreen(
         StatusCard(state = moduleState)
 
         UpdateCard(
-            isUpdateAvailable = isUpdateAvailable,
-            updateUrl = updateUrl,
+            state = updateState,
             onOpenLink = onOpenLink,
             onCheckForUpdate = onCheckForUpdate
         )

@@ -15,8 +15,12 @@
     <string name="module_disabled_text">Turn on the master switch in Settings.</string>
     <string name="new_version_available">New version available</string>
     <string name="module_up_to_date">Module up to date</string>
-    <string name="tap_to_check_update">Tap to check for updates</string>
     <string name="tap_to_download">Tap to download</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_please_wait">Please wait</string>
+    <string name="update_check_failed">Check failed</string>
+    <string name="update_tap_to_retry">Tap to retry</string>
+    <string name="update_checked_at">Checked %1$s</string>
     <string name="android_version">Android Version</string>
     <string name="device_model">Device Model</string>
     <string name="app_version">App Version</string>

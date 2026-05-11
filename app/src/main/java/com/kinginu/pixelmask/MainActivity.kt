@@ -63,6 +63,7 @@ import com.kinginu.pixelmask.Constants.FIELD_DOWNLOAD_URL
 import com.kinginu.pixelmask.Constants.FIELD_LATEST_VERSION_CODE
 import com.kinginu.pixelmask.Constants.LATEST_RELEASE_URL
 import com.kinginu.pixelmask.Constants.UPDATE_INFO_URL
+import com.kinginu.pixelmask.ui.components.UpdateCheckState
 import com.kinginu.pixelmask.ui.screens.HomeScreen
 import com.kinginu.pixelmask.ui.screens.SettingScreen
 import kotlinx.coroutines.Dispatchers
@@ -129,11 +130,16 @@ class MainActivity : ComponentActivity() {
         val coroutineScope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
 
-        var updateUrl by remember { mutableStateOf<String?>(null) }
+        var updateState by remember {
+            mutableStateOf<UpdateCheckState>(UpdateCheckState.Checking)
+        }
 
         fun checkUpdate() {
             coroutineScope.launch {
-                updateUrl = withContext(Dispatchers.IO) { checkUpdateAvailable(appVersionCode) }
+                updateState = UpdateCheckState.Checking
+                updateState = withContext(Dispatchers.IO) {
+                    checkUpdateAvailable(appVersionCode)
+                }
             }
         }
 
@@ -218,7 +224,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 composable(Screen.Home.route) {
                     HomeScreen(
-                        updateUrl = updateUrl,
+                        updateState = updateState,
                         appVersion = appVersion,
                         onOpenLink = { url -> openWebLink(url) },
                         onCheckForUpdate = { checkUpdate() }
@@ -231,33 +237,42 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkUpdateAvailable(currentVersionCode: Long): String? = try {
-        // URL.readText() leaves both timeouts at 0 (= infinite), so a slow / hung CDN
-        // would block the IO coroutine forever. Open the connection ourselves and pin
-        // both timeouts to a few seconds.
-        val connection = (URL(UPDATE_INFO_URL).openConnection() as HttpURLConnection).apply {
-            connectTimeout = 5_000
-            readTimeout = 5_000
-        }
-        val jsonString = try {
-            connection.inputStream.bufferedReader().use { it.readText() }
-        } finally {
-            connection.disconnect()
-        }
-        if (jsonString.isNotBlank()) {
+    private fun checkUpdateAvailable(currentVersionCode: Long): UpdateCheckState {
+        val now = System.currentTimeMillis()
+        return try {
+            // URL.readText() leaves both timeouts at 0 (= infinite), so a slow / hung
+            // CDN would block the IO coroutine forever. Open the connection ourselves
+            // and pin both timeouts to a few seconds.
+            val connection = (URL(UPDATE_INFO_URL).openConnection() as HttpURLConnection).apply {
+                connectTimeout = 5_000
+                readTimeout = 5_000
+            }
+            val jsonString = try {
+                connection.inputStream.bufferedReader().use { it.readText() }
+            } finally {
+                connection.disconnect()
+            }
+            // An empty body is not a "no update" — it means the upstream JSON is
+            // missing or truncated, which we can't tell apart from a real error.
+            // Surface it as Failed so the UI shows "tap to retry" instead of
+            // a misleading "up to date".
+            if (jsonString.isBlank()) return UpdateCheckState.Failed(now)
             val json = JSONObject(jsonString)
             val remoteVersion = json.getInt(FIELD_LATEST_VERSION_CODE)
             if (currentVersionCode < remoteVersion) {
                 // Workflow already wrote the exact APK URL into download_url; if it's
-                // missing for any reason, fall back to /releases/latest so the user still
-                // ends up somewhere useful.
-                json.optString(FIELD_DOWNLOAD_URL).takeIf { it.isNotBlank() }
+                // missing for any reason, fall back to /releases/latest so the user
+                // still ends up somewhere useful.
+                val url = json.optString(FIELD_DOWNLOAD_URL).takeIf { it.isNotBlank() }
                     ?: LATEST_RELEASE_URL
-            } else null
-        } else null
-    } catch (e: Exception) {
-        android.util.Log.w("PixelMask", "update check failed", e)
-        null
+                UpdateCheckState.UpdateAvailable(url, now)
+            } else {
+                UpdateCheckState.UpToDate(now)
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("PixelMask", "update check failed", e)
+            UpdateCheckState.Failed(now)
+        }
     }
 
     private fun openWebLink(url: String) {
