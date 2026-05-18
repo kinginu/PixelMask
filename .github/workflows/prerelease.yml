@@ -1,0 +1,153 @@
+name: Pre-release (test build)
+
+# Signed, downloadable test APKs for sharing with specific issue reporters
+# before a feature reaches stable. Distinct from release.yml in three ways:
+#
+#   - prerelease: true on the GitHub release, so the /releases/latest API
+#     skips it and the in-app updater won't notify regular users
+#   - update_info.json is NOT bumped, for the same reason
+#   - the LSPosed module catalog is NOT mirrored
+#
+# Reuses the release signing keystore so testers can install over an
+# existing stable build without uninstalling first (Android refuses to
+# replace a signed install with a debug-signed APK).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name (e.g. 1.1.1-test1). Used in tag, APK filename, and versionName.'
+        required: true
+      version_code:
+        description: 'versionCode (integer). Leave blank to auto-pick latest stable + 1.'
+        required: false
+      ref:
+        description: 'Branch / tag / sha to build from. Default: current branch.'
+        required: false
+      notes:
+        description: 'Release notes (markdown). Optional.'
+        required: false
+      issue_number:
+        description: 'Issue # to auto-comment with the download link. Optional.'
+        required: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build-prerelease:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Resolve version code
+        env:
+          INPUT_CODE: ${{ inputs.version_code }}
+        run: |
+          if [ -n "$INPUT_CODE" ]; then
+            # Reject anything that isn't a non-negative integer so a typo in
+            # the dispatch form can't end up baked into the APK metadata.
+            if ! [[ "$INPUT_CODE" =~ ^[0-9]+$ ]]; then
+              echo "::error::version_code must be a non-negative integer, got: $INPUT_CODE" >&2
+              exit 1
+            fi
+            RESOLVED="$INPUT_CODE"
+            echo "Using explicit version_code: $RESOLVED"
+          elif [ -f update_info.json ]; then
+            STABLE=$(jq -r '.latest_version_code // 0' update_info.json)
+            RESOLVED=$((STABLE + 1))
+            echo "Auto: latest stable=$STABLE, prerelease code=$RESOLVED"
+          else
+            RESOLVED=1
+            echo "No update_info.json; defaulting to 1"
+          fi
+          echo "RESOLVED_VERSION_CODE=$RESOLVED" >> "$GITHUB_ENV"
+
+      - name: Decode release keystore from secret
+        env:
+          KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::RELEASE_KEYSTORE_B64 secret is not set." >&2
+            exit 1
+          fi
+          # printf %s avoids appending a newline that breaks base64 -d on
+          # some keystore payloads.
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+
+      - name: Build signed release APK
+        # Pass secrets through env vars rather than inlining ${{ secrets.* }}
+        # into the shell command. With direct interpolation, any $ ` " in a
+        # password would break the command line; env-var indirection is also
+        # the pattern Actions recommends for secret material.
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleRelease \
+            -PversionCode="$RESOLVED_VERSION_CODE" \
+            -PversionName="$VERSION_NAME" \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+
+      - name: Rename APK
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
+        run: |
+          SRC_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          DEST_APK="app/build/outputs/apk/release/PixelMask-${VERSION_NAME}.apk"
+          if [ "$SRC_APK" != "$DEST_APK" ]; then
+            mv "$SRC_APK" "$DEST_APK"
+          fi
+          ls -la app/build/outputs/apk/release/
+
+      - name: Create GitHub pre-release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RESOLVED_VERSION_CODE }}-${{ inputs.version_name }}
+          name: v${{ inputs.version_name }} (test build)
+          body: ${{ inputs.notes }}
+          target_commitish: ${{ inputs.ref || github.ref }}
+          files: |
+            app/build/outputs/apk/release/PixelMask-${{ inputs.version_name }}.apk
+          draft: false
+          prerelease: true
+
+      - name: Comment on issue (if requested)
+        if: inputs.issue_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION_NAME: ${{ inputs.version_name }}
+          ISSUE: ${{ inputs.issue_number }}
+          DOWNLOAD_URL: ${{ fromJSON(steps.create_release.outputs.assets)[0].browser_download_url }}
+        run: |
+          # Avoid embedding ${{ ... }} inside the heredoc body; route through
+          # env so issue/changelog content can't shell-inject.
+          gh issue comment "$ISSUE" \
+            --repo "${{ github.repository }}" \
+            --body "$(cat <<EOF
+A test build for this issue is available:
+
+**[PixelMask-${VERSION_NAME}.apk](${DOWNLOAD_URL})**
+
+Signed with the same key as stable releases, so it installs over your current PixelMask without uninstalling. Please reboot once after installing (LSPosed needs to re-inject the hook into Google Photos). Then try toggling the spoof target in PixelMask Settings and tapping **Restart Google Photos** — let us know if Photos restarts cleanly and the spoof takes effect.
+EOF
+)"
