@@ -158,7 +158,7 @@ class MainActivity : ComponentActivity() {
 
         LaunchedEffect(Unit) { checkUpdate() }
 
-        val rebootMessage = stringResource(R.string.please_force_stop_google_photos)
+        val rebootMessage = stringResource(R.string.please_restart_google_photos)
         // Rapid toggling in Settings would otherwise queue a snackbar per change and the
         // user has to wait through all of them. Cancel the previous job so only the most
         // recent change ever shows.

@@ -37,11 +37,12 @@
     <string name="target_device">Target Device</string>
     <string name="enable_verbose_logs">Enable verbose logs</string>
     <string name="actions">Actions</string>
-    <string name="stop_google_photos_via_settings">Stop Google Photos in Settings</string>
+    <string name="restart_google_photos">Restart Google Photos</string>
     <string name="open_google_photos">Open Google Photos</string>
-    <string name="please_force_stop_google_photos">Please force stop Google Photos to take effect.</string>
+    <string name="please_restart_google_photos">Tap “Restart Google Photos” to apply changes.</string>
 
     <!-- Utils -->
-    <string name="tap_force_stop_in_app_info">Tap “Force stop” in the app info screen.</string>
+    <string name="restart_in_progress">Restarting Google Photos…</string>
+    <string name="restart_no_response">Google Photos didn\'t respond. If you just enabled PixelMask, reboot once to install the hook.</string>
     <string name="failed_to_launch_package">Failed to launch. Please start manually.</string>
 </resources>

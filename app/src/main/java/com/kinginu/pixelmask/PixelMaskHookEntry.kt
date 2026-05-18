@@ -1,5 +1,14 @@
 package com.kinginu.pixelmask
 
+import android.app.Application
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
+import android.os.Process
+import com.kinginu.pixelmask.Constants.ACTION_RESTART_ACK
+import com.kinginu.pixelmask.Constants.ACTION_RESTART_PHOTOS
 import com.kinginu.pixelmask.Constants.PACKAGE_NAME_GOOGLE_PHOTOS
 import com.kinginu.pixelmask.Constants.PREF_DEVICE_TO_SPOOF
 import com.kinginu.pixelmask.Constants.PREF_ENABLE_VERBOSE_LOGS
@@ -12,6 +21,7 @@ import com.highcapable.yukihookapi.annotation.xposed.InjectYukiHookWithXposed
 import com.highcapable.yukihookapi.hook.factory.toClass
 import com.highcapable.yukihookapi.hook.log.YLog
 import com.highcapable.yukihookapi.hook.xposed.proxy.IYukiHookXposedInit
+import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedHelpers
 import kotlin.reflect.KClass
 
@@ -94,6 +104,49 @@ class PixelMaskHookEntry : IYukiHookXposedInit {
 
             hookHasSystemFeature(String::class)
             hookHasSystemFeature(String::class, Int::class)
+
+            // Register an in-process kill switch so the user can restart Photos from
+            // PixelMask Manager without relying on the system "Force stop" button
+            // (which is inert on some OEM skins) or root. The receiver lives only as
+            // long as the Photos process; on respawn this hook re-installs it. We
+            // attach it from Application.onCreate so we have a valid Context to
+            // register against.
+            XposedHelpers.findAndHookMethod(
+                "android.app.Application",
+                appClassLoader,
+                "onCreate",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val app = param.thisObject as? Application ?: return
+                        val receiver = object : BroadcastReceiver() {
+                            override fun onReceive(c: Context, intent: Intent) {
+                                if (intent.action != ACTION_RESTART_PHOTOS) return
+                                if (verbose) YLog.info("Restart request received, killing pid ${Process.myPid()}")
+                                // Send ACK back to Manager before dying so it can confirm
+                                // the hook is installed and schedule the relaunch. sendBroadcast
+                                // queues the intent on AMS via Binder synchronously, so AMS has
+                                // the broadcast in hand before killProcess takes effect.
+                                val ack = Intent(ACTION_RESTART_ACK).apply {
+                                    `package` = BuildConfig.APPLICATION_ID
+                                }
+                                runCatching { c.sendBroadcast(ack) }
+                                Process.killProcess(Process.myPid())
+                            }
+                        }
+                        val filter = IntentFilter(ACTION_RESTART_PHOTOS)
+                        // RECEIVER_EXPORTED is required on API 34+ for context-registered
+                        // receivers that accept cross-package broadcasts. The constant is
+                        // 0x2; using the literal avoids a compile-time API-level gate.
+                        runCatching {
+                            if (Build.VERSION.SDK_INT >= 33) {
+                                app.registerReceiver(receiver, filter, /* RECEIVER_EXPORTED */ 0x2)
+                            } else {
+                                app.registerReceiver(receiver, filter)
+                            }
+                        }.onFailure { YLog.warn("Failed to register restart receiver", it) }
+                    }
+                }
+            )
         }
     }
 }

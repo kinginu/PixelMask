@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -151,12 +152,11 @@ fun SettingScreen(onSettingChanged: () -> Unit) {
         ActionCard(
             items = listOf(
                 ActionCardItemData(
-                    title = stringResource(R.string.stop_google_photos_via_settings),
-                    icon = Icons.AutoMirrored.Filled.OpenInNew,
+                    title = stringResource(R.string.restart_google_photos),
+                    icon = Icons.Filled.RestartAlt,
                     color = MaterialTheme.colorScheme.error,
                     onClick = {
-                        Utils.openAppInfo(Constants.PACKAGE_NAME_GOOGLE_PHOTOS, context)
-                        notifyChangedIfActive()
+                        Utils.restartGooglePhotos(context)
                     }
                 ),
                 ActionCardItemData(

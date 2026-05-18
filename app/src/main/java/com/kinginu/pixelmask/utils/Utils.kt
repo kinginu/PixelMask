@@ -1,10 +1,12 @@
 package com.kinginu.pixelmask.utils
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.content.IntentFilter
 import android.os.Build
-import android.provider.Settings
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.net.toUri
@@ -15,24 +17,77 @@ import com.kinginu.pixelmask.spoof.DeviceProps
 
 object Utils {
 
-    // Open the system "App info" screen for the given package. We can't programmatically
-    // force-stop another app from a non-system process — every su / am force-stop dance from
-    // here would silently fail — so we just hand the user off to Settings, where the *Force
-    // stop* button is one tap away.
-    fun openAppInfo(packageName: String, context: Context) {
-        val intent = Intent().apply {
-            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-            data = Uri.fromParts("package", packageName, null)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    // ACK is fast in practice (~200 ms in tests). 2.5 s is the budget we give the
+    // hook to respond before assuming it isn't installed in the running Photos
+    // process — usually because Photos was launched before LSPosed could inject.
+    private const val ACK_TIMEOUT_MS = 2_500L
+
+    // After ACK arrives the Photos process is about to die; give it a moment to
+    // actually tear down before we ask Android to start a fresh one, otherwise
+    // the launch can race the kill and Android brings the dying activity to the
+    // front instead of forking a new process with our hook applied.
+    private const val RELAUNCH_DELAY_MS = 800L
+
+    // Ask Google Photos to self-terminate via a broadcast caught by our in-process
+    // LSPosed hook. We do it this way instead of asking the user to tap the system
+    // "Force stop" button because that button is inert on some OEM skins (the user
+    // reported this on Nothing OS).
+    //
+    // Flow: send kill broadcast → wait for ACK from the hook → relaunch Photos so
+    // the user sees a clean restart with the updated spoof config. If no ACK
+    // arrives within the timeout the hook isn't installed in the running process
+    // (or Photos isn't running at all), and we surface a hint telling the user to
+    // reboot once.
+    fun restartGooglePhotos(context: Context) {
+        val appContext = context.applicationContext
+        val handler = Handler(Looper.getMainLooper())
+        var done = false
+
+        lateinit var receiver: BroadcastReceiver
+        val timeout = Runnable {
+            if (done) return@Runnable
+            done = true
+            runCatching { appContext.unregisterReceiver(receiver) }
+            Toast.makeText(appContext, R.string.restart_no_response, Toast.LENGTH_LONG).show()
         }
-        try {
-            context.startActivity(intent)
-            // Only show the "tap force stop" hint after we successfully reached Settings;
-            // otherwise it's a misleading instruction sitting on top of a no-op.
-            Toast.makeText(context, R.string.tap_force_stop_in_app_info, Toast.LENGTH_LONG).show()
-        } catch (_: Exception) {
-            Toast.makeText(context, R.string.failed_to_launch_package, Toast.LENGTH_SHORT).show()
+
+        receiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context, intent: Intent) {
+                if (intent.action != Constants.ACTION_RESTART_ACK) return
+                if (done) return
+                done = true
+                handler.removeCallbacks(timeout)
+                runCatching { appContext.unregisterReceiver(this) }
+                Toast.makeText(appContext, R.string.restart_in_progress, Toast.LENGTH_LONG).show()
+                handler.postDelayed({ launchPhotos(appContext) }, RELAUNCH_DELAY_MS)
+            }
         }
+
+        val filter = IntentFilter(Constants.ACTION_RESTART_ACK)
+        runCatching {
+            if (Build.VERSION.SDK_INT >= 33) {
+                appContext.registerReceiver(receiver, filter, /* RECEIVER_EXPORTED */ 0x2)
+            } else {
+                appContext.registerReceiver(receiver, filter)
+            }
+        }
+
+        handler.postDelayed(timeout, ACK_TIMEOUT_MS)
+
+        val kill = Intent(Constants.ACTION_RESTART_PHOTOS).apply {
+            // Scope the broadcast to Photos so we don't leak the action to any other
+            // app that might register the same filter.
+            `package` = Constants.PACKAGE_NAME_GOOGLE_PHOTOS
+        }
+        appContext.sendBroadcast(kill)
+    }
+
+    private fun launchPhotos(context: Context) {
+        val launch = context.packageManager
+            .getLaunchIntentForPackage(Constants.PACKAGE_NAME_GOOGLE_PHOTOS)
+            ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            ?: return
+        runCatching { context.startActivity(launch) }
     }
 
     fun openApplication(packageName: String, context: Context) {
