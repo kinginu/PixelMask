@@ -135,19 +135,17 @@ jobs:
         if: inputs.issue_number != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
           VERSION_NAME: ${{ inputs.version_name }}
           ISSUE: ${{ inputs.issue_number }}
           DOWNLOAD_URL: ${{ fromJSON(steps.create_release.outputs.assets)[0].browser_download_url }}
         run: |
-          # Avoid embedding ${{ ... }} inside the heredoc body; route through
-          # env so issue/changelog content can't shell-inject.
-          gh issue comment "$ISSUE" \
-            --repo "${{ github.repository }}" \
-            --body "$(cat <<EOF
-A test build for this issue is available:
-
-**[PixelMask-${VERSION_NAME}.apk](${DOWNLOAD_URL})**
-
-Signed with the same key as stable releases, so it installs over your current PixelMask without uninstalling. Please reboot once after installing (LSPosed needs to re-inject the hook into Google Photos). Then try toggling the spoof target in PixelMask Settings and tapping **Restart Google Photos** — let us know if Photos restarts cleanly and the spoof takes effect.
-EOF
-)"
+          # Build the comment body via printf rather than a heredoc — a heredoc
+          # body cannot be unindented to column 0 inside a YAML literal-block
+          # scalar without terminating the block, and indenting the body would
+          # leak leading spaces into the rendered Markdown.
+          BODY=$(printf '%s\n\n%s\n\n%s\n' \
+            "A test build for this issue is available:" \
+            "**[PixelMask-${VERSION_NAME}.apk](${DOWNLOAD_URL})**" \
+            "Signed with the same key as stable releases, so it installs over your current PixelMask without uninstalling. Please reboot once after installing (LSPosed needs to re-inject the hook into Google Photos). Then try toggling the spoof target in PixelMask Settings and tapping **Restart Google Photos** — let us know if Photos restarts cleanly and the spoof takes effect.")
+          gh issue comment "$ISSUE" --repo "$REPO" --body "$BODY"
