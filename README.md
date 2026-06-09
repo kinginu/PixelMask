@@ -38,9 +38,7 @@ choosing would give. Photos then turns on the perks tied to that Pixel.
    [Releases](https://github.com/kinginu/PixelMask/releases/latest).
 2. Install the APK like any other.
 3. Open **LSPosed Manager** → enable PixelMask.
-4. **Scope it to Google Photos *and* to PixelMask itself.** Both. Without
-   scoping the module to itself, the home screen sticks on *Module Not Active*
-   even when the hook is working.
+4. Scope it to **Google Photos**.
 5. Force-stop Google Photos (the next section walks you through it from inside
    the app).
 
@@ -68,9 +66,8 @@ you'll see this line:
 ![Photos backup proof flow](docs/banner-proof.png)
 
 If that line isn't there, the hook didn't fire. Common causes: forgot to
-force-stop Photos after changing the target Pixel; forgot to scope the module
-to itself in LSPosed; another module (`tricky_store`, `shamiko`,
-`hidemyapplist`, …) is hiding LSPosed from Photos.
+force-stop Photos after changing the target Pixel; another module
+(`tricky_store`, `shamiko`, `hidemyapplist`, …) is hiding LSPosed from Photos.
 
 ## Which Pixel should I pick?
 
