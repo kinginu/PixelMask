@@ -55,6 +55,11 @@ answers as if the device were a Pixel of the user's choosing.
    └─────────────────────────────────────────────────────────────┘
 ```
 
+> **Why root?** Whether this can run without root (Shizuku / LSPatch /
+> app-cloning), what Google actually checks to grant or revoke the perk, and
+> what happens to already-backed-up photos when a spoof is detected, are
+> answered in [rootless-and-detection.md](rootless-and-detection.md).
+
 The **two-list trick** (`featuresToEnable` vs.
 `featuresToBlock = allKnown - featuresToEnable`) is what lets you target an
 *older* Pixel from a phone whose Photos app already detects newer features:
