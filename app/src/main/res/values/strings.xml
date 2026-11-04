@@ -13,6 +13,14 @@
     <string name="module_not_active_text">Enable %1$s in LSPosed / EdXposed and reboot.</string>
     <string name="module_disabled">Module Disabled</string>
     <string name="module_disabled_text">Turn on the master switch in Settings.</string>
+    <string name="photos_active">Active in Google Photos</string>
+    <string name="photos_active_text">Spoofing as %1$s · Photos %2$s · %3$s</string>
+    <string name="photos_error">Error in Google Photos</string>
+    <string name="photos_error_text">%1$s</string>
+    <string name="photos_no_report">Not applied to Google Photos yet</string>
+    <string name="photos_no_report_text">Make sure Google Photos is checked in the LSPosed scope, then open Google Photos. If it still shows this, reboot once.</string>
+    <string name="photos_outdated">Restart Google Photos to apply</string>
+    <string name="photos_outdated_text">Google Photos is still running with older settings. Tap “Restart Google Photos” in Settings.</string>
     <string name="new_version_available">New version available</string>
     <string name="module_up_to_date">Module up to date</string>
     <string name="tap_to_download">Tap to download</string>
@@ -37,11 +45,12 @@
     <string name="target_device">Target Device</string>
     <string name="enable_verbose_logs">Enable verbose logs</string>
     <string name="actions">Actions</string>
-    <string name="stop_google_photos_via_settings">Stop Google Photos in Settings</string>
+    <string name="restart_google_photos">Restart Google Photos</string>
     <string name="open_google_photos">Open Google Photos</string>
-    <string name="please_force_stop_google_photos">Please force stop Google Photos to take effect.</string>
+    <string name="please_restart_google_photos">Tap “Restart Google Photos” to apply changes.</string>
 
     <!-- Utils -->
-    <string name="tap_force_stop_in_app_info">Tap “Force stop” in the app info screen.</string>
+    <string name="restart_in_progress">Restarting Google Photos…</string>
+    <string name="restart_no_response">Google Photos didn\'t respond. If you just enabled PixelMask, reboot once to install the hook.</string>
     <string name="failed_to_launch_package">Failed to launch. Please start manually.</string>
 </resources>

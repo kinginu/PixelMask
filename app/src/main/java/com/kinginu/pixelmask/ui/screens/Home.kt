@@ -25,6 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.pm.PackageInfoCompat
+import android.text.format.DateUtils
+import com.kinginu.pixelmask.BuildConfig
+import com.kinginu.pixelmask.spoof.DeviceProps
 import com.kinginu.pixelmask.Constants
 import com.kinginu.pixelmask.R
 import com.kinginu.pixelmask.ui.components.InfoCard
@@ -35,6 +39,7 @@ import com.kinginu.pixelmask.ui.components.ModuleState
 import com.kinginu.pixelmask.ui.components.StatusCard
 import com.kinginu.pixelmask.ui.components.UpdateCard
 import com.kinginu.pixelmask.ui.components.UpdateCheckState
+import com.kinginu.pixelmask.utils.HookReport
 import com.kinginu.pixelmask.utils.ModuleStatus
 import com.kinginu.pixelmask.utils.Utils
 
@@ -65,11 +70,20 @@ fun HomeScreen(
         prefs.registerOnSharedPreferenceChangeListener(listener)
         awaitDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
-    val moduleState = when {
-        !ModuleStatus.isModuleActive() -> ModuleState.NOT_LOADED
-        !moduleEnabled -> ModuleState.DISABLED
-        else -> ModuleState.ACTIVE
+    // Last report from the hook inside Photos, kept live so it updates while Home is open.
+    val statusPrefs = remember(context) {
+        context.getSharedPreferences(Constants.HOOK_STATUS_PREF_FILE, Context.MODE_PRIVATE)
     }
+    val hookReport by produceState(initialValue = HookReport.load(context), statusPrefs) {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == Constants.PREF_LAST_HOOK_REPORT) value = HookReport.load(context)
+        }
+        statusPrefs.registerOnSharedPreferenceChangeListener(listener)
+        // Ask a running Photos for a fresh report; no answer just means it isn't running.
+        Utils.requestHookStatus(context)
+        awaitDispose { statusPrefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+    val status = homeStatus(context, prefs, ModuleStatus.isModuleActive(), moduleEnabled, hookReport)
     val appName = stringResource(R.string.app_name)
 
     Column(
@@ -79,7 +93,7 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        StatusCard(state = moduleState)
+        StatusCard(state = status.state, title = status.title, subtitle = status.subtitle)
 
         UpdateCard(
             state = updateState,
@@ -123,4 +137,69 @@ fun HomeScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
     }
+}
+
+private data class HomeStatus(val state: ModuleState, val title: String, val subtitle: String?)
+
+@Composable
+private fun homeStatus(
+    context: Context,
+    prefs: SharedPreferences,
+    frameworkLoaded: Boolean,
+    moduleEnabled: Boolean,
+    report: HookReport?,
+): HomeStatus {
+    val appName = stringResource(R.string.app_name)
+    if (!frameworkLoaded) return HomeStatus(
+        ModuleState.NOT_LOADED,
+        stringResource(R.string.module_not_active),
+        stringResource(R.string.module_not_active_text, appName),
+    )
+    if (!moduleEnabled) return HomeStatus(
+        ModuleState.DISABLED,
+        stringResource(R.string.module_disabled),
+        stringResource(R.string.module_disabled_text),
+    )
+    if (report == null) return HomeStatus(
+        ModuleState.PHOTOS_WAITING,
+        stringResource(R.string.photos_no_report),
+        stringResource(R.string.photos_no_report_text),
+    )
+
+    // The report is outdated if Photos is still running with an older module build,
+    // an older Photos build, a different target, or the master switch as it was before.
+    val installedPhotosCode = remember(report) {
+        runCatching {
+            PackageInfoCompat.getLongVersionCode(
+                context.packageManager.getPackageInfo(Constants.PACKAGE_NAME_GOOGLE_PHOTOS, 0)
+            )
+        }.getOrDefault(-1L)
+    }
+    val target = prefs.getString(Constants.PREF_DEVICE_TO_SPOOF, DeviceProps.defaultDeviceName)
+    val outdated = report.moduleVersionCode != BuildConfig.VERSION_CODE ||
+        (installedPhotosCode != -1L && report.photosVersionCode != installedPhotosCode) ||
+        report.target != target ||
+        !report.masterEnabled
+    if (outdated) return HomeStatus(
+        ModuleState.PHOTOS_WAITING,
+        stringResource(R.string.photos_outdated),
+        stringResource(R.string.photos_outdated_text),
+    )
+
+    val now = System.currentTimeMillis()
+    val ago = if (now - report.timestamp < DateUtils.MINUTE_IN_MILLIS) {
+        stringResource(R.string.update_just_now)
+    } else {
+        DateUtils.getRelativeTimeSpanString(report.timestamp, now, DateUtils.MINUTE_IN_MILLIS).toString()
+    }
+    val problem = report.firstProblem
+    return if (problem == null) HomeStatus(
+        ModuleState.PHOTOS_OK,
+        stringResource(R.string.photos_active),
+        stringResource(R.string.photos_active_text, report.target, report.photosVersionName, ago),
+    ) else HomeStatus(
+        ModuleState.PHOTOS_ERROR,
+        stringResource(R.string.photos_error),
+        stringResource(R.string.photos_error_text, problem),
+    )
 }

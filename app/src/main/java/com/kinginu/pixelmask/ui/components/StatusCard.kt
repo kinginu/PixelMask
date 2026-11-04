@@ -18,37 +18,35 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.kinginu.pixelmask.R
 
-enum class ModuleState { ACTIVE, DISABLED, NOT_LOADED }
+enum class ModuleState {
+    /** Framework isn't loading PixelMask at all. */
+    NOT_LOADED,
+    /** Master switch is off. */
+    DISABLED,
+    /** Hook reported from Photos and every step succeeded. */
+    PHOTOS_OK,
+    /** Hook reported from Photos but something failed. */
+    PHOTOS_ERROR,
+    /** Photos hasn't reported yet, or is running with an older setup. */
+    PHOTOS_WAITING,
+}
 
 @Composable
-fun StatusCard(state: ModuleState) {
+fun StatusCard(state: ModuleState, title: String, subtitle: String?) {
     val containerColor = when (state) {
-        ModuleState.ACTIVE -> MaterialTheme.colorScheme.primaryContainer
-        ModuleState.DISABLED -> MaterialTheme.colorScheme.tertiaryContainer
-        ModuleState.NOT_LOADED -> MaterialTheme.colorScheme.errorContainer
+        ModuleState.PHOTOS_OK -> MaterialTheme.colorScheme.primaryContainer
+        ModuleState.DISABLED, ModuleState.PHOTOS_WAITING -> MaterialTheme.colorScheme.tertiaryContainer
+        ModuleState.NOT_LOADED, ModuleState.PHOTOS_ERROR -> MaterialTheme.colorScheme.errorContainer
     }
     val contentColor = when (state) {
-        ModuleState.ACTIVE -> MaterialTheme.colorScheme.onPrimaryContainer
-        ModuleState.DISABLED -> MaterialTheme.colorScheme.onTertiaryContainer
-        ModuleState.NOT_LOADED -> MaterialTheme.colorScheme.onErrorContainer
+        ModuleState.PHOTOS_OK -> MaterialTheme.colorScheme.onPrimaryContainer
+        ModuleState.DISABLED, ModuleState.PHOTOS_WAITING -> MaterialTheme.colorScheme.onTertiaryContainer
+        ModuleState.NOT_LOADED, ModuleState.PHOTOS_ERROR -> MaterialTheme.colorScheme.onErrorContainer
     }
-    val icon = if (state == ModuleState.ACTIVE) Icons.Default.CheckCircle else Icons.Default.Warning
-    val titleRes = when (state) {
-        ModuleState.ACTIVE -> R.string.module_active
-        ModuleState.DISABLED -> R.string.module_disabled
-        ModuleState.NOT_LOADED -> R.string.module_not_active
-    }
-    val appName = stringResource(R.string.app_name)
-    val subtitle: String? = when (state) {
-        ModuleState.ACTIVE -> null
-        ModuleState.DISABLED -> stringResource(R.string.module_disabled_text)
-        ModuleState.NOT_LOADED -> stringResource(R.string.module_not_active_text, appName)
-    }
+    val icon = if (state == ModuleState.PHOTOS_OK) Icons.Default.CheckCircle else Icons.Default.Warning
 
     Card(
         colors = CardDefaults.cardColors(containerColor = containerColor),
@@ -67,7 +65,7 @@ fun StatusCard(state: ModuleState) {
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
-                    text = stringResource(titleRes),
+                    text = title,
                     fontWeight = FontWeight.Bold,
                     color = contentColor
                 )

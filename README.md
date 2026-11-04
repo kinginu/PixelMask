@@ -41,7 +41,9 @@ Pixel.
 ## Use it
 
 1. Open PixelMask → **Settings tab** → **Target Device**, and pick a Pixel.
-2. Tap **Stop Google Photos in Settings** → **Force stop**, then reopen Photos.
+2. Tap **Restart Google Photos**.
+
+The Home tab shows **Active in Google Photos** once the hook is running there.
 
 ## Did it work?
 
@@ -52,7 +54,7 @@ Photos → account icon → **Photos settings** → **Backup** should show:
 ![Photos backup proof flow](docs/banner-proof.png)
 
 If not, tap **Report — Not working** on the Home tab. It fills in the details
-we need.
+we need, including what the hook did inside Photos.
 
 ## Which Pixel should I pick?
 
