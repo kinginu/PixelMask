@@ -82,6 +82,15 @@ object Utils {
         appContext.sendBroadcast(kill)
     }
 
+    // Ask a running Photos process to send a fresh HookReport. Nothing comes back if
+    // Photos isn't running or the hook isn't in it; the last stored report stays.
+    fun requestHookStatus(context: Context) {
+        val intent = Intent(Constants.ACTION_HOOK_STATUS_REQUEST).apply {
+            `package` = Constants.PACKAGE_NAME_GOOGLE_PHOTOS
+        }
+        runCatching { context.applicationContext.sendBroadcast(intent) }
+    }
+
     private fun launchPhotos(context: Context) {
         val launch = context.packageManager
             .getLaunchIntentForPackage(Constants.PACKAGE_NAME_GOOGLE_PHOTOS)
@@ -139,6 +148,10 @@ object Utils {
             appendLine("Spoof target:        $spoofTarget")
             appendLine("Master switch:       $masterEnabled")
             appendLine("Verbose logs:        $verboseLogs")
+            // What the hook inside Photos says it did. "none" means Photos never
+            // reported: the hook isn't loaded there (scope, framework, or reboot).
+            val report = HookReport.load(context)
+            if (report == null) append("Hook report:         none") else append(report.toDiagLines())
         }
 
         val uri = "${Constants.REPO_URL_PUBLIC}/issues/new".toUri().buildUpon()

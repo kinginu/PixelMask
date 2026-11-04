@@ -13,6 +13,14 @@
     <string name="module_not_active_text">Enable %1$s in LSPosed / EdXposed and reboot.</string>
     <string name="module_disabled">Module Disabled</string>
     <string name="module_disabled_text">Turn on the master switch in Settings.</string>
+    <string name="photos_active">Active in Google Photos</string>
+    <string name="photos_active_text">Spoofing as %1$s · Photos %2$s · %3$s</string>
+    <string name="photos_error">Error in Google Photos</string>
+    <string name="photos_error_text">%1$s</string>
+    <string name="photos_no_report">Not applied to Google Photos yet</string>
+    <string name="photos_no_report_text">Make sure Google Photos is checked in the LSPosed scope, then open Google Photos. If it still shows this, reboot once.</string>
+    <string name="photos_outdated">Restart Google Photos to apply</string>
+    <string name="photos_outdated_text">Google Photos is still running with older settings. Tap “Restart Google Photos” in Settings.</string>
     <string name="new_version_available">New version available</string>
     <string name="module_up_to_date">Module up to date</string>
     <string name="tap_to_download">Tap to download</string>

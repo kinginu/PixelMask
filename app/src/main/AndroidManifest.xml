@@ -30,6 +30,14 @@
             android:name="xposedscope"
             android:resource="@array/module_scope" />
 
+        <!-- Receives HookReports from the hook running inside Google Photos. -->
+        <receiver android:name=".utils.HookStatusReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.kinginu.pixelmask.action.HOOK_REPORT" />
+            </intent-filter>
+        </receiver>
+
         <activity android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
